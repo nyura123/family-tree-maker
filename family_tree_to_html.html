@@ -1,0 +1,666 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Family Tree</title>
+    <style>
+      :root {
+        --cream: #f7f3ec;
+        --parchment: #ede5d4;
+        --ink: #1c1710;
+        --brown: #6b4c2a;
+        --rust: #a0522d;
+        --gold: #c9a84c;
+        --gold-lt: #e8d5a3;
+        --line: #c4a87a;
+        --muted: #7a6a54;
+        --card-bg: #fffdf7;
+        --light-green: #d4e8d0;
+        --line-width: 1.5px;
+        --vertical-connect-line-height: 30px;
+        --loving-blue-color: #6a8fb0;
+      }
+
+      #drop-zone {
+        border: 1.5px dashed var(--color-border-secondary);
+        /* border-radius:12px; */
+        margin-block: 10px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        background: var(--parchment);
+      }
+      #drop-zone:hover,
+      #drop-zone.drag-over {
+        opacity: 0.8;
+      }
+      #drop-zone i {
+        font-size: 36px;
+        color: var(--color-text-secondary);
+        display: block;
+        margin-bottom: 12px;
+      }
+      #drop-zone p {
+        color: var(--color-text-secondary);
+        font-size: 14px;
+        margin-top: 6px;
+      }
+      #drop-zone strong {
+        color: var(--color-text-primary);
+        font-size: 15px;
+        display: block;
+      }
+      #file-input {
+        display: none;
+      }
+
+      button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        background-color: var(--rust);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      body {
+        background: var(--cream);
+        font-family: "Cormorant Garamond", Georgia, serif;
+        color: var(--ink);
+        min-height: 100vh;
+        padding: 3rem 1.5rem 5rem;
+        /* background-image:
+              radial-gradient(ellipse at 20% 10%, #e8d9bf44 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 90%, #d4b89644 0%, transparent 50%),
+              /* reverse */
+        /* radial-gradient(ellipse at 20% 10%, #d4b89644 0%, transparent 50%), */
+        /* radial-gradient(ellipse at 80% 90%, #e8d9bf44 0%, transparent 50%);  */
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      header::before,
+      header::after {
+        content: "";
+        display: block;
+        height: 1px;
+        background: linear-gradient(
+          to right,
+          transparent,
+          var(--gold),
+          transparent
+        );
+        margin: 0.9rem auto;
+        width: 55%;
+      }
+
+      .family-name {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(2rem, 4.5vw, 3.6rem);
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--ink);
+        line-height: 1;
+      }
+
+      .family-sub {
+        font-size: 1rem;
+        color: var(--muted);
+        font-style: italic;
+        letter-spacing: 0.1em;
+        margin-top: 0.4rem;
+      }
+
+      .ornament {
+        font-size: 1.3rem;
+        color: var(--gold);
+        display: block;
+        margin: 0.5rem 0;
+      }
+
+      .grid-two-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin-block: 20px;
+        width: 100%;
+      }
+
+      .line-top-right {
+        border-top: var(--line-width) solid var(--line);
+        border-right: var(--line-width) solid var(--line);
+      }
+
+      .line-left-top-right {
+        border-top: var(--line-width) solid var(--line);
+        border-right: var(--line-width) solid var(--line);
+        border-left: var(--line-width) solid var(--line);
+      }
+
+      .line-right {
+        border-right: var(--line-width) solid var(--line);
+      }
+
+      .line-left-top {
+        border-top: var(--line-width) solid var(--line);
+        border-left: var(--line-width) solid var(--line);
+      }
+
+      .line-top {
+        border-top: var(--line-width) solid var(--line);
+      }
+
+      .vertical-connect {
+        height: var(--vertical-connect-line-height);
+      }
+
+      .couple {
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+        align-items: flex-start;
+      }
+      .spouse-left {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+      }
+      .spouse-right {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+      }
+
+      .siblings {
+        display: flex;
+        justify-content: space-between;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .couple-heart {
+        font-size: 30px;
+        color: var(--rust);
+      }
+
+      .family-tree {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      /* ── Person card ── */
+      .person {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        /* background-color: red; */
+        /* width: 110px; */
+        margin: 0 6px;
+        /* padding-bottom: 3px; */
+        /* border-bottom: var(--line-width) solid var(--light-green); */
+      }
+
+      /* .person:first-child {
+            align-items: flex-start;
+          }
+          .person:last-child {
+            align-items: flex-end;
+          } */
+      /* .person.spouse {
+            width: 110px;
+          } */
+
+      .photo {
+        width: 64px;
+        /* padding: 10px; */
+        height: 64px;
+        border-radius: 50%;
+        background: var(--parchment);
+        border: 2px solid var(--gold-lt);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Playfair Display", serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--brown);
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        /* uppercase the initials */
+        text-transform: uppercase;
+      }
+
+      .photo::after {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        border-radius: 50%;
+        border: 1px solid rgba(201, 168, 76, 0.3);
+        pointer-events: none;
+      }
+
+      /* generation-tinted photo rings */
+      .gen-1 .photo {
+        background: #e8d5b0;
+        border-color: #c9a84c;
+      }
+
+      .gen-2 .photo {
+        background: #d4e8d0;
+        border-color: #7aad72;
+      }
+
+      .gen-3 .photo {
+        background: #d0dce8;
+        border-color: #6a8fb0;
+      }
+
+      .gen-4 .photo {
+        background: #e8d4e4;
+        border-color: #b07aa0;
+      }
+
+      .gen-5 .photo {
+        background: #d4d0e8;
+        border-color: #7a72ad;
+      }
+
+      .gen-6 .photo {
+        background: #efc1c1;
+        border-color: #e8968c;
+      }
+
+      /* .gen-7 .photo { background: #d0e8d4; border-color: #72ad7a; } */
+
+      .person-info {
+        text-align: center;
+        margin-top: 7px;
+      }
+
+      .person-name {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1.2;
+        color: var(--ink);
+      }
+
+      .person-dates {
+        font-size: 0.68rem;
+        color: var(--muted);
+        font-style: italic;
+        margin-top: 2px;
+        letter-spacing: 0.02em;
+      }
+
+      .person-note {
+        font-size: 0.65rem;
+        color: var(--rust);
+        margin-top: 2px;
+        font-style: italic;
+      }
+
+      /* ── Animations ── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .person {
+        animation: fadeUp 0.6s ease both;
+      }
+
+      .gen-1 .person {
+        animation-delay: 0.05s;
+      }
+
+      .gen-2 .person {
+        animation-delay: 0.15s;
+      }
+
+      .gen-3 .person {
+        animation-delay: 0.25s;
+      }
+
+      .gen-4 .person {
+        animation-delay: 0.35s;
+      }
+
+      .gen-5 .person {
+        animation-delay: 0.45s;
+      }
+
+      .gen-6 .person {
+        animation-delay: 0.55s;
+      }
+
+      /* .gen-7 .person { animation-delay: 0.65s; } */
+
+      .person:hover .photo {
+        transform: scale(1.08);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .photo {
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+    </style>
+    <script>
+      function getInitials(name) {
+        const parts = name.split(" ").filter((part) => part.length > 0);
+        if (parts.length >= 2) {
+          const lastNameInitial = parts[1][0];
+          // check that lastNameInitial is a ascii
+          const isLastNameAscii = /[A-Za-z]/.test(lastNameInitial);
+          const isLastNameRussian = /[А-Яа-яЁё]/.test(lastNameInitial);
+          return (
+            parts[0][0] +
+            (isLastNameAscii || isLastNameRussian ? lastNameInitial : "")
+          );
+        } else {
+          return name.slice(0, 1);
+        }
+      }
+      function renderPersonStyle(person) {
+        let style = "";
+        if (person.color) {
+          style += `color: ${person.color};`;
+        }
+        if (person.backgroundColor) {
+          style += `background-color: ${person.backgroundColor};`;
+        }
+        return style;
+      }
+      function renderCouple(person, generation) {
+        let coupleHtml = `<div class="couple gen-${generation}">`;
+        // person.spouse exists
+        coupleHtml += `<div class="spouse-left">`;
+        coupleHtml += `<div class="person" style="align-items: flex-end">`;
+        coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
+        coupleHtml += `<div class="person-info"><div class="person-name">${person.name}</div></div>`;
+        coupleHtml += `</div>`;
+        coupleHtml += `</div>`;
+        coupleHtml += `<div class="couple-heart">♥</div>`;
+        coupleHtml += `<div class="spouse-right">`;
+        coupleHtml += `<div class="person" style="align-items: flex-start">`;
+        coupleHtml += `<div class="photo" style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
+        coupleHtml += `<div class="person-info"><div class="person-name">${person.spouse.name}</div></div>`;
+        coupleHtml += `</div>`;
+        coupleHtml += `</div>`;
+        coupleHtml += `</div>`;
+        return coupleHtml;
+      }
+      function renderPerson(person, generation) {
+        let personHtml = "";
+        if (person.spouse) {
+          personHtml += renderCouple(person, generation);
+        } else {
+          personHtml += `<div class="person gen-${generation}">`;
+          personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
+          personHtml += `<div class="person-info"><div class="person-name">${person.name}</div></div>`;
+          personHtml += `</div>`;
+        }
+        return personHtml;
+      }
+      function renderNode(node, generation = 1) {
+        let nodeHtml = `<div>`;
+        nodeHtml += renderPerson(node, generation);
+        if (node.children && node.children.length > 0) {
+          const multipleChildren = node.children.length > 1;
+          nodeHtml += multipleChildren
+            ? renderMultipleChildrenConnection()
+            : renderSingleChildConnection();
+          nodeHtml += multipleChildren ? '<div class="siblings">' : "";
+          for (const child of node.children) {
+            nodeHtml += renderNode(child, generation + 1);
+          }
+          nodeHtml += multipleChildren ? "</div>" : "";
+        }
+        nodeHtml += "</div>";
+        return nodeHtml;
+      }
+      function renderSingleChildConnection() {
+        return `
+                <div class="grid-two-cols">
+                    <div class="line-right vertical-connect"></div>
+                    <div></div>
+                    <div class="line-right vertical-connect"></div>
+                    <div></div>
+                </div>
+                `;
+      }
+      function renderMultipleChildrenConnection() {
+        return `
+                <div class="grid-two-cols">
+                    <div class="line-right vertical-connect"></div>
+                    <div></div>
+                    <div class="line-left-top vertical-connect"></div>
+                    <div class="line-top-right"></div>
+                </div>
+                `;
+      }
+      function familyTreeJsonToHtml(title, subtitle, familyTree) {
+        const rootNode = renderNode(familyTree);
+        return (
+          `
+                <div class="family-tree">
+      <header>
+        <span class="ornament">✦</span>
+        <h1 class="family-name">${title}</h1>
+        <p class="family-sub">${subtitle}</p>
+        <span class="ornament">✦</span>
+      </header>` +
+          rootNode +
+          `</div>
+                `
+        );
+      }
+
+      const familyJson = {
+        title: "The Smith Family",
+        subtitle: "A record of four generations",
+        name: "Grampa",
+        spouse: {
+          name: "Gramma",
+        },
+        children: [
+          {
+            name: "Child0",
+            spouse: {
+              name: "Child0 spouse",
+            },
+            children: [
+              {
+                name: "GrandChild0",
+                children: [
+                  {
+                    name: "GrandGrandChild00",
+                  },
+                  {
+                    name: "GrandGrandChild1",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "Child1",
+          },
+          {
+            name: "Child2",
+            spouse: {
+              name: "Child2 spouse",
+            },
+            children: [
+              {
+                name: "GrandChild1",
+                children: [
+                  {
+                    name: "GrandGrandChild1",
+                  },
+                  {
+                    name: "GrandGrandChild2",
+                    children: [
+                      {
+                        name: "GreatGrandChild1",
+                      },
+                      {
+                        name: "GreatGrandChild2",
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                name: "GrandChild1",
+              },
+            ],
+          },
+          {
+            name: "Child3",
+          },
+          {
+            name: "Child4",
+          },
+        ],
+      };
+    </script>
+  </head>
+  <body>
+    <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <i class="ti ti-file-upload" aria-hidden="true"></i>
+      <strong>Drop your .json family file here</strong>
+      <p>or click to browse — JSON format</p>
+      <input type="file" id="file-input" accept=".json,text/plain" />
+    </div>
+
+    <div id="json-input">
+      <!-- JSON data will be placed here, defaulting to the familyJson variable defined in the script -->
+      <!-- multiline text input -->
+      <textarea
+        id="family-json-input"
+        style="width: 100%; height: 500px"
+      ></textarea>
+    </div>
+
+    <button onclick="updateFamilyTree()">Update Family Tree</button>
+    <button onclick="exportAsHtml()">Export as HTML</button>
+    <button onclick="openHTMLInNewTab()">Open in New Tab</button>
+    <script>
+      // handle file drag and drop for the drop zone
+      const dropZone = document.getElementById("drop-zone");
+      const fileInput = document.getElementById("file-input");
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("drag-over");
+      });
+      dropZone.addEventListener("dragleave", () =>
+        dropZone.classList.remove("drag-over"),
+      );
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("drag-over");
+        if (e.dataTransfer.files[0]) {
+          readJsonFile(e.dataTransfer.files[0]);
+        }
+      });
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files[0]) readJsonFile(e.target.files[0]);
+      });
+      function readJsonFile(f) {
+        const r = new FileReader();
+        r.onload = (e) => {
+          const prettyInput = JSON.stringify(
+            JSON.parse(e.target.result),
+            null,
+            2,
+          );
+          document.getElementById("family-json-input").value = prettyInput;
+          updateFamilyTree();
+        };
+        r.readAsText(f);
+      }
+
+      // parse the JSON from the textarea and update the family tree HTML
+      function updateFamilyTree() {
+        const input = document.getElementById("family-json-input").value;
+        try {
+          const parsedJson = JSON.parse(input);
+
+          const title = parsedJson.title || "Family Tree";
+          const subtitle = parsedJson.subtitle || "";
+          document.getElementById("family-tree-container").innerHTML =
+            familyTreeJsonToHtml(title, subtitle, parsedJson);
+        } catch (e) {
+          alert("Invalid JSON: " + e.message);
+        }
+      }
+      // wrap the family tree HTML and styles for export
+      function getWrappedHtmlForExport() {
+        const htmlContent = document.getElementById(
+          "family-tree-container",
+        ).outerHTML;
+        const style = document.querySelector("style").outerHTML;
+        return `<!DOCTYPE html>
+                <html>
+                <head>
+                <meta charset="UTF-8">
+                <title>Family Tree</title>
+                ${style}
+                </head>
+                <body>
+                ${htmlContent}
+                </body>
+                </html>`;
+      }
+      // export the family tree as an HTML file
+      function exportAsHtml() {
+        const wrappedHtml = getWrappedHtmlForExport();
+        const blob = new Blob([wrappedHtml], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "family_tree.html";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      // open the family tree in a new tab
+      function openHTMLInNewTab() {
+        const wrappedHtml = getWrappedHtmlForExport();
+        const blob = new Blob([wrappedHtml], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+      }
+    </script>
+    <div id="family-tree-container"></div>
+    <script>
+      // populate the textarea with the default JSON
+      document.getElementById("family-json-input").value = JSON.stringify(
+        familyJson,
+        null,
+        2,
+      );
+      updateFamilyTree();
+    </script>
+  </body>
+</html>
