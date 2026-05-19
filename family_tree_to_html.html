@@ -153,10 +153,6 @@
         border-top: var(--line-width) solid var(--line);
       }
 
-      .vertical-connect {
-        height: var(--vertical-connect-line-height);
-      }
-
       .couple {
         display: flex;
         justify-content: center;
@@ -190,8 +186,8 @@
       }
 
       .family-tree {
-        display: grid;
-        grid-template-columns: 1fr;
+        width: fit-content;
+        padding-right: 20px;
       }
 
       /* ── Person card ── */
@@ -424,37 +420,47 @@
       }
       function renderNode(node, generation = 1) {
         let nodeHtml = `<div>`;
-        nodeHtml += renderPerson(node, generation);
+        nodeHtml +=
+          '<div style="height:170px;display:flex;flex-direction:column">' +
+          renderPerson(node, generation);
         if (node.children && node.children.length > 0) {
           const multipleChildren = node.children.length > 1;
           nodeHtml += multipleChildren
             ? renderMultipleChildrenConnection()
             : renderSingleChildConnection();
+          nodeHtml += "</div>"; // close person + connection container div
           nodeHtml += multipleChildren ? '<div class="siblings">' : "";
           for (const child of node.children) {
             nodeHtml += renderNode(child, generation + 1);
           }
           nodeHtml += multipleChildren ? "</div>" : "";
+        } else {
+          nodeHtml += "</div>"; // close person container div if no children
         }
         nodeHtml += "</div>";
         return nodeHtml;
       }
       function renderSingleChildConnection() {
+        // flex-1 makes it take rest of parent (person+connection)'s static height
+        // this makes all the parent+connection containers the same height,
+        // even when some people have multi-line names.
         return `
-                <div class="grid-two-cols">
-                    <div class="line-right vertical-connect"></div>
+                <div class="grid-two-cols" style="flex:1">
+                    <div class="line-right"></div>
                     <div></div>
-                    <div class="line-right vertical-connect"></div>
+                    <div class="line-right"></div>
                     <div></div>
                 </div>
                 `;
       }
       function renderMultipleChildrenConnection() {
+        // flex-1 makes it take rest of parent (person+connection)'s static height,
+        // see comment above in renderSingleChildConnection.
         return `
-                <div class="grid-two-cols">
-                    <div class="line-right vertical-connect"></div>
+                <div class="grid-two-cols" style="flex:1">
+                    <div class="line-right"></div>
                     <div></div>
-                    <div class="line-left-top vertical-connect"></div>
+                    <div class="line-left-top"></div>
                     <div class="line-top-right"></div>
                 </div>
                 `;
