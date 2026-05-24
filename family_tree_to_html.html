@@ -211,20 +211,6 @@
             var(--person-margin)
         );
       }
-      .connection-top-left-corner-single-couple {
-        position: absolute;
-        top: calc(
-          var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
-        );
-        height: calc(var(--vertical-connect-line-height) * 1);
-        /* for single-child couple, we want the top border from center of child spouse to couple heart center */
-        left: calc(
-          50% - var(--person-width) / 2 - var(--heart-width) / 2 -
-            var(--person-margin)
-        );
-        right: 50%;
-        border-top: calc(var(--line-width) * 1) solid var(--line);
-      }
       .connection-top-right-corner {
         position: absolute;
         top: calc(
@@ -245,6 +231,34 @@
         );
       }
 
+      .connection-top-left-corner-single-couple {
+        position: absolute;
+        top: calc(
+          var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
+        );
+        height: calc(var(--vertical-connect-line-height) * 1);
+        /* for single-child couple, we want the top border from center of child spouse to couple heart center */
+        left: calc(
+          50% - var(--person-width) / 2 - var(--heart-width) / 2 -
+            var(--person-margin)
+        );
+        right: 50%;
+        border-top: calc(var(--line-width) * 1) solid var(--line);
+      }
+
+      /* vertical line to single or middle child */
+      .person.single-or-middle-child::after {
+        content: " ";
+        position: absolute;
+        top: calc(
+          var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
+        );
+        height: calc(var(--vertical-connect-line-height) * 1);
+        left: 0;
+        right: 50%;
+        border-right: calc(var(--line-width) * 1) solid var(--line);
+      }
+
       .couple-heart {
         width: var(--heart-width);
         font-size: 30px;
@@ -260,6 +274,7 @@
 
       /* ── Person card ── */
       .person {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -326,8 +341,16 @@
         border-color: #7aad72;
       }
       .gen-2 .spouse-right .photo {
-        background-color: color-mix(in srgb, #d4e8d0, white var(--spouse-lighten-pcnt));
-        border-color: color-mix(in srgb, #7aad72, white var(--spouse-lighten-pcnt));
+        background-color: color-mix(
+          in srgb,
+          #d4e8d0,
+          white var(--spouse-lighten-pcnt)
+        );
+        border-color: color-mix(
+          in srgb,
+          #7aad72,
+          white var(--spouse-lighten-pcnt)
+        );
       }
 
       .gen-3 .photo {
@@ -335,8 +358,16 @@
         border-color: #6a8fb0;
       }
       .gen-3 .spouse-right .photo {
-        background-color: color-mix(in srgb, #d0dce8, white var(--spouse-lighten-pcnt));
-        border-color: color-mix(in srgb, #6a8fb0, white var(--spouse-lighten-pcnt));
+        background-color: color-mix(
+          in srgb,
+          #d0dce8,
+          white var(--spouse-lighten-pcnt)
+        );
+        border-color: color-mix(
+          in srgb,
+          #6a8fb0,
+          white var(--spouse-lighten-pcnt)
+        );
       }
 
       .gen-4 .photo {
@@ -344,8 +375,16 @@
         border-color: #b07aa0;
       }
       .gen-4 .spouse-right .photo {
-        background-color: color-mix(in srgb, #e8d4e4, white var(--spouse-lighten-pcnt));
-        border-color: color-mix(in srgb, #b07aa0, white var(--spouse-lighten-pcnt));
+        background-color: color-mix(
+          in srgb,
+          #e8d4e4,
+          white var(--spouse-lighten-pcnt)
+        );
+        border-color: color-mix(
+          in srgb,
+          #b07aa0,
+          white var(--spouse-lighten-pcnt)
+        );
       }
 
       .gen-5 .photo {
@@ -353,8 +392,16 @@
         border-color: #7a72ad;
       }
       .gen-5 .spouse-right .photo {
-        background-color: color-mix(in srgb, #d4d0e8, white var(--spouse-lighten-pcnt));
-        border-color: color-mix(in srgb, #7a72ad, white var(--spouse-lighten-pcnt));
+        background-color: color-mix(
+          in srgb,
+          #d4d0e8,
+          white var(--spouse-lighten-pcnt)
+        );
+        border-color: color-mix(
+          in srgb,
+          #7a72ad,
+          white var(--spouse-lighten-pcnt)
+        );
       }
 
       .gen-6 .photo {
@@ -362,8 +409,16 @@
         border-color: #e8968c;
       }
       .gen-6 .spouse-right .photo {
-        background-color: color-mix(in srgb, #efc1c1, white var(--spouse-lighten-pcnt));
-        border-color: color-mix(in srgb, #e8968c, white var(--spouse-lighten-pcnt));
+        background-color: color-mix(
+          in srgb,
+          #efc1c1,
+          white var(--spouse-lighten-pcnt)
+        );
+        border-color: color-mix(
+          in srgb,
+          #e8968c,
+          white var(--spouse-lighten-pcnt)
+        );
       }
 
       /* .gen-7 .photo { background: #d0e8d4; border-color: #72ad7a; } */
@@ -491,11 +546,11 @@
         }
         return style;
       }
-      function renderCouple(person, generation) {
+      function renderCouple(person, generation, isSingleOrMiddleChild) {
         let coupleHtml = `<div class="couple gen-${generation}">`;
         // person.spouse exists
         coupleHtml += `<div class="spouse-left">`;
-        coupleHtml += `<div class="person" style="align-items: flex-end">`;
+        coupleHtml += `<div class="person${isSingleOrMiddleChild ? " single-or-middle-child" : ""}" style="align-items: flex-end">`;
         coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div></div>`;
         coupleHtml += `</div>`;
@@ -510,12 +565,12 @@
         coupleHtml += `</div>`;
         return coupleHtml;
       }
-      function renderPerson(person, generation) {
+      function renderPerson(person, generation, isSingleOrMiddleChild) {
         let personHtml = "";
         if (person.spouse) {
-          personHtml += renderCouple(person, generation);
+          personHtml += renderCouple(person, generation, isSingleOrMiddleChild);
         } else {
-          personHtml += `<div class="person gen-${generation}">`;
+          personHtml += `<div class="person gen-${generation}${isSingleOrMiddleChild ? " single-or-middle-child" : ""}">`;
           personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
           personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div></div>`;
           personHtml += `</div>`;
@@ -548,7 +603,8 @@
         if (generation > 1 && isLastChild && !isFirstChild) {
           nodeHtml += `<div class="connection-top-right-corner ${isCouple ? "is-couple" : ""}"></div>`;
         }
-        nodeHtml += renderPerson(node, generation);
+        const isSingleOrMiddleChild = (!node.spouse && isFirstChild && isLastChild) || (!isFirstChild && !isLastChild);
+        nodeHtml += renderPerson(node, generation, isSingleOrMiddleChild);
 
         if (node.children && node.children.length > 0) {
           const multipleChildren = node.children.length > 1;
