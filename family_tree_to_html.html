@@ -272,6 +272,15 @@
         padding-right: 20px;
       }
 
+      .family-node {
+        position: relative;
+        /* height controls how tall the flexible lines between generations are */
+        height: 130px;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+      }
+
       /* ── Person card ── */
       .person {
         position: relative;
@@ -583,9 +592,9 @@
         isFirstChild = true,
         isLastChild = true,
       ) {
-        let nodeHtml = `<div style="width:100%">`;
+        let nodeHtml = "<div style='flex: 1;'>";
 
-        nodeHtml += `<div style="position:relative;height:120px;display:flex;align-items:center;flex-direction:column">`;
+        nodeHtml += `<div class="family-node">`;
 
         // erase overhangs from parent connection lines for better visuals
         const isCouple = node.spouse ? true : false;
@@ -603,7 +612,9 @@
         if (generation > 1 && isLastChild && !isFirstChild) {
           nodeHtml += `<div class="connection-top-right-corner ${isCouple ? "is-couple" : ""}"></div>`;
         }
-        const isSingleOrMiddleChild = (!node.spouse && isFirstChild && isLastChild) || (!isFirstChild && !isLastChild);
+        const isSingleOrMiddleChild =
+          (!node.spouse && isFirstChild && isLastChild) ||
+          (!isFirstChild && !isLastChild);
         nodeHtml += renderPerson(node, generation, isSingleOrMiddleChild);
 
         if (node.children && node.children.length > 0) {
@@ -622,7 +633,7 @@
               isLastChild,
             );
           }
-          nodeHtml += "</div>";
+          nodeHtml += "</div>"; // close siblings container div
         } else {
           nodeHtml += "</div>"; // close person container div if no children
         }
@@ -673,19 +684,27 @@
             children: [
               {
                 name: "GrandChild0",
-                spouse: {
-                  name: "GrandChild0 spouse",
-                },
+                // spouse: {
+                //   name: "GrandChild0 spouse",
+                // },
                 children: [
                   {
                     name: "GrandGrandChild00",
-                    spouse: {
-                      name: "GrandGrandChild00 spouse",
-                    },
+                    children: [
+                      {
+                        name: "GreatGrandChild000",
+                      },
+                      {
+                        name: "GreatGrandChild001",
+                      },
+                    ],
+                    // spouse: {
+                    //   name: "GrandGrandChild00 spouse",
+                    // },
                   },
-                  {
-                    name: "GrandGrandChild1",
-                  },
+                  //   {
+                  //     name: "GrandGrandChild1",
+                  //   },
                 ],
               },
             ],
@@ -727,6 +746,14 @@
                       },
                       {
                         name: "GreatGrandChild2",
+                        children: [
+                          {
+                            name: "GreatGreatGrandChild3",
+                          },
+                          {
+                            name: "GreatGreatGrandChild4",
+                          },
+                        ],
                       },
                     ],
                   },
@@ -751,6 +778,12 @@
             children: [
               {
                 name: "GrandChild2",
+              },
+              {
+                name: "GrandChild3",
+              },
+              {
+                name: "GrandChild4",
               },
             ],
           },
