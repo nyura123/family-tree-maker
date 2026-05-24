@@ -191,7 +191,7 @@
         border-top: var(--line-width) solid var(--line);
       }
 
-      .connection-top-left-edge {
+      .connection-top-left-corner {
         position: absolute;
         top: calc(
           var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
@@ -202,14 +202,14 @@
         border-top: calc(var(--line-width) * 1) solid var(--cream);
         border-right: var(--line-width) solid var(--line);
       }
-      .connection-top-left-edge.is-couple {
+      .connection-top-left-corner.is-couple {
         /* move it to the left so that we're pointing to center of child spouse instead of
          center of couple (heart)   */
         right: calc(
           50% + var(--person-width) / 2 + var(--heart-width) / 2 + var(--person-margin)
         );
       }
-      .connection-top-left-edge-single-couple {
+      .connection-top-left-corner-single-couple {
         position: absolute;
         top: calc(
           var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
@@ -222,7 +222,7 @@
         right: 50%;
         border-top: calc(var(--line-width) * 1) solid var(--line);
       }
-      .connection-top-right-edge {
+      .connection-top-right-corner {
         position: absolute;
         top: calc(
           var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
@@ -233,7 +233,7 @@
         border-top: calc(var(--line-width) * 1) solid var(--cream);
         border-left: var(--line-width) solid var(--line);
       }
-      .connection-top-right-edge.is-couple {
+      .connection-top-right-corner.is-couple {
         /* move it to the left so that we're pointing to center of child spouse instead of
          center of couple (heart)   */
         left: calc(
@@ -508,13 +508,13 @@
         const isCouple = node.spouse ? true : false;
         const singleChildCouple = isCouple && isFirstChild && isLastChild;
         if (generation > 1 && isFirstChild && (!isLastChild || singleChildCouple)) {
-          nodeHtml += `<div class="connection-top-left-edge ${isCouple ? "is-couple" : ""}"></div>`;
+          nodeHtml += `<div class="connection-top-left-corner ${isCouple ? "is-couple" : ""}"></div>`;
           if (singleChildCouple) {
-            nodeHtml += `<div class="connection-top-left-edge-single-couple"></div>`;
+            nodeHtml += `<div class="connection-top-left-corner-single-couple"></div>`;
           }
         }
         if (generation > 1 && isLastChild && !isFirstChild) {
-          nodeHtml += `<div class="connection-top-right-edge ${isCouple ? "is-couple" : ""}"></div>`;
+          nodeHtml += `<div class="connection-top-right-corner ${isCouple ? "is-couple" : ""}"></div>`;
         }
         nodeHtml += renderPerson(node, generation);
 
