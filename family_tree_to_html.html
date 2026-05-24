@@ -16,8 +16,11 @@
         --card-bg: #fffdf7;
         --light-green: #d4e8d0;
         --line-width: 1.5px;
-        --vertical-connect-line-height: 30px;
+        --vertical-connect-line-height: 20px;
         --loving-blue-color: #6a8fb0;
+        --person-width: 64px;
+        --heart-width: 18px;
+        --person-margin: 6px;
       }
 
       #drop-zone {
@@ -125,7 +128,7 @@
       .grid-two-cols {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        margin-block: 20px;
+        margin-block: var(--vertical-connect-line-height);
         width: 100%;
       }
 
@@ -154,10 +157,9 @@
       }
 
       .couple {
-        display: flex;
-        justify-content: center;
-        flex-direction: row;
-        align-items: center;
+        display: grid;
+        /* minmax ensures the spouses are equal width, allowing us to know where the center of left spouse is */
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       }
       .spouse-left {
         flex: 1;
@@ -174,16 +176,55 @@
 
       .siblings {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         flex-direction: row;
         align-items: flex-start;
         gap: 10px;
       }
 
+      .connection-top-left-edge {
+        position: absolute;
+        top: calc(
+          var(--vertical-connect-line-height) * -2 + var(--line-width) * -1
+        );
+        height: 30px;
+        left: 0;
+        right: 50%;
+        border-top: calc(var(--line-width) * 2) solid var(--cream);
+        border-right: var(--line-width) solid var(--line);
+      }
+      .connection-top-left-edge.is-couple {
+        /* move it to the left so that we're pointing to center of child spouse instead of
+         center of couple (heart)   */
+        right: calc(
+          50% + var(--person-width) / 2 + var(--heart-width) / 2 + var(--person-margin)
+        );
+      }
+      .connection-top-right-edge {
+        position: absolute;
+        top: calc(
+          var(--vertical-connect-line-height) * -2 + var(--line-width) * -1
+        );
+        height: 30px;
+        left: 50%;
+        right: 0;
+        border-top: calc(var(--line-width) * 2) solid var(--cream);
+        border-left: var(--line-width) solid var(--line);
+      }
+      .connection-top-right-edge.is-couple {
+        /* move it to the left so that we're pointing to center of child spouse instead of
+         center of couple (heart)   */
+        left: calc(
+          50% - var(--person-width) / 2 - var(--heart-width) - var(--person-margin)
+        );
+      }
+
       .couple-heart {
+        width: var(--heart-width);
         font-size: 30px;
-        margin-top: -20px;
+        margin-top: 10px;
         color: var(--rust);
+        text-align: center;
       }
 
       .family-tree {
@@ -198,7 +239,7 @@
         align-items: center;
         /* background-color: red; */
         /* width: 110px; */
-        margin: 0 6px;
+        margin: 0 var(--person-margin);
         /* padding-bottom: 3px; */
         /* border-bottom: var(--line-width) solid var(--light-green); */
       }
@@ -214,9 +255,9 @@
           } */
 
       .photo {
-        width: 64px;
+        width: var(--person-width);
         /* padding: 10px; */
-        height: 64px;
+        height: var(--person-width);
         border-radius: 50%;
         background: var(--parchment);
         border: 2px solid var(--gold-lt);
@@ -288,6 +329,12 @@
         font-weight: 600;
         line-height: 1.2;
         color: var(--ink);
+
+        /* ellipsis: "..."; */
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .person-dates {
@@ -394,14 +441,14 @@
         coupleHtml += `<div class="spouse-left">`;
         coupleHtml += `<div class="person" style="align-items: flex-end">`;
         coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
-        coupleHtml += `<div class="person-info"><div class="person-name">${person.name}</div></div>`;
+        coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div></div>`;
         coupleHtml += `</div>`;
         coupleHtml += `</div>`;
         coupleHtml += `<div class="couple-heart">♥</div>`;
         coupleHtml += `<div class="spouse-right">`;
         coupleHtml += `<div class="person" style="align-items: flex-start">`;
         coupleHtml += `<div class="photo" style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
-        coupleHtml += `<div class="person-info"><div class="person-name">${person.spouse.name}</div></div>`;
+        coupleHtml += `<div class="person-info"><div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div></div>`;
         coupleHtml += `</div>`;
         coupleHtml += `</div>`;
         coupleHtml += `</div>`;
@@ -414,27 +461,50 @@
         } else {
           personHtml += `<div class="person gen-${generation}">`;
           personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
-          personHtml += `<div class="person-info"><div class="person-name">${person.name}</div></div>`;
+          personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div></div>`;
           personHtml += `</div>`;
         }
         return personHtml;
       }
-      function renderNode(node, generation = 1) {
-        let nodeHtml = `<div>`;
+      function renderNode(
+        node,
+        generation = 1,
+        isFirstChild = true,
+        isLastChild = true,
+      ) {
+        let nodeHtml = `<div style="width:100%">`;
         nodeHtml +=
-          '<div style="height:170px;display:flex;flex-direction:column">' +
-          renderPerson(node, generation);
+          '<div style="position:relative;flex:1;height:170px;display:flex;align-items:center;flex-direction:column">';
+
+        const isCouple = node.spouse ? true : false;
+        // erase overhangs from parent connection lines for better visuals
+        if (generation > 1 && isFirstChild && !isLastChild) {
+          nodeHtml += `<div class="connection-top-left-edge ${isCouple ? "is-couple" : ""}"></div>`;
+        }
+        if (generation > 1 && isLastChild && !isFirstChild) {
+          nodeHtml += `<div class="connection-top-right-edge ${isCouple ? "is-couple" : ""}"></div>`;
+        }
+        nodeHtml += renderPerson(node, generation);
+
         if (node.children && node.children.length > 0) {
           const multipleChildren = node.children.length > 1;
           nodeHtml += multipleChildren
             ? renderMultipleChildrenConnection()
             : renderSingleChildConnection();
           nodeHtml += "</div>"; // close person + connection container div
-          nodeHtml += multipleChildren ? '<div class="siblings">' : "";
-          for (const child of node.children) {
-            nodeHtml += renderNode(child, generation + 1);
+          nodeHtml += '<div class="siblings">';
+          for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            const isFirstChild = i === 0;
+            const isLastChild = i === node.children.length - 1;
+            nodeHtml += renderNode(
+              child,
+              generation + 1,
+              isFirstChild,
+              isLastChild,
+            );
           }
-          nodeHtml += multipleChildren ? "</div>" : "";
+          nodeHtml += "</div>";
         } else {
           nodeHtml += "</div>"; // close person container div if no children
         }
@@ -461,8 +531,8 @@
                 <div class="grid-two-cols" style="flex:1">
                     <div class="line-right"></div>
                     <div></div>
-                    <div class="line-left-top"></div>
-                    <div class="line-top-right"></div>
+                    <div class="line-top"></div>
+                    <div class="line-top"></div>
                 </div>
                 `;
       }
@@ -499,6 +569,9 @@
             children: [
               {
                 name: "GrandChild0",
+                spouse: {
+                  name: "GrandChild0 spouse",
+                },
                 children: [
                   {
                     name: "GrandGrandChild00",
@@ -512,6 +585,9 @@
           },
           {
             name: "Child1",
+            spouse: {
+              name: "Child1 spouse",
+            },
           },
           {
             name: "Child2",
@@ -548,6 +624,9 @@
           },
           {
             name: "Child4",
+            spouse: {
+              name: "Child4 spouse",
+            },
           },
         ],
       };
