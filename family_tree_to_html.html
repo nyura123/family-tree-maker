@@ -16,11 +16,11 @@
         --card-bg: #fffdf7;
         --light-green: #d4e8d0;
         --line-width: 1.5px;
-        --vertical-connect-line-height: 20px;
+        --vertical-connect-line-height: 25px;
         --loving-blue-color: #6a8fb0;
         --person-width: 64px;
         --heart-width: 18px;
-        --person-margin: 6px;
+        --person-margin: 5px;
       }
 
       #drop-zone {
@@ -128,7 +128,8 @@
       .grid-two-cols {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        margin-block: var(--vertical-connect-line-height);
+        margin-top: 5px;
+        /* margin-block: var(--vertical-connect-line-height); */
         width: 100%;
       }
 
@@ -157,40 +158,48 @@
       }
 
       .couple {
-        display: grid;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+        /* display: grid; */
         /* minmax ensures the spouses are equal width, allowing us to know where the center of left spouse is */
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        /* grid-template-columns: minmax(75px, 1fr) auto minmax(75px, 1fr); */
       }
       .spouse-left {
-        flex: 1;
+        width: 150px;
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
       }
       .spouse-right {
-        flex: 1;
+        width: 150px;
         display: flex;
         flex-direction: row;
         justify-content: flex-start;
       }
 
       .siblings {
+        padding-top: var(--vertical-connect-line-height);
         display: flex;
         justify-content: center;
         flex-direction: row;
         align-items: flex-start;
         gap: 10px;
       }
+      .siblings.multiple-children {
+        border-top: var(--line-width) solid var(--line);
+      }
 
       .connection-top-left-edge {
         position: absolute;
         top: calc(
-          var(--vertical-connect-line-height) * -2 + var(--line-width) * -1
+          var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
         );
-        height: 30px;
+        height: calc(var(--vertical-connect-line-height) * 1);
         left: 0;
         right: 50%;
-        border-top: calc(var(--line-width) * 2) solid var(--cream);
+        border-top: calc(var(--line-width) * 1) solid var(--cream);
         border-right: var(--line-width) solid var(--line);
       }
       .connection-top-left-edge.is-couple {
@@ -200,22 +209,35 @@
           50% + var(--person-width) / 2 + var(--heart-width) / 2 + var(--person-margin)
         );
       }
+      .connection-top-left-edge-single-couple {
+        position: absolute;
+        top: calc(
+          var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
+        );
+        height: calc(var(--vertical-connect-line-height) * 1);
+        /* for single-child couple, we want the top border from center of child spouse to couple heart center */
+        left: calc(
+          50% - var(--person-width) / 2 - var(--heart-width) / 2 - var(--person-margin)
+        );
+        right: 50%;
+        border-top: calc(var(--line-width) * 1) solid var(--line);
+      }
       .connection-top-right-edge {
         position: absolute;
         top: calc(
-          var(--vertical-connect-line-height) * -2 + var(--line-width) * -1
+          var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
         );
-        height: 30px;
+        height: calc(var(--vertical-connect-line-height) * 1);
         left: 50%;
         right: 0;
-        border-top: calc(var(--line-width) * 2) solid var(--cream);
+        border-top: calc(var(--line-width) * 1) solid var(--cream);
         border-left: var(--line-width) solid var(--line);
       }
       .connection-top-right-edge.is-couple {
         /* move it to the left so that we're pointing to center of child spouse instead of
          center of couple (heart)   */
         left: calc(
-          50% - var(--person-width) / 2 - var(--heart-width) - var(--person-margin)
+          50% - var(--person-width) / 2 - var(--heart-width) / 2 - var(--person-margin)
         );
       }
 
@@ -248,7 +270,6 @@
             align-items: flex-start;
           }
           .person:last-child {
-            align-items: flex-end;
           } */
       /* .person.spouse {
             width: 110px;
@@ -322,6 +343,12 @@
         text-align: center;
         margin-top: 7px;
       }
+      .spouse-left .person-info {
+        text-align: right;
+      }
+      .spouse-right .person-info {
+        text-align: left;
+      }
 
       .person-name {
         font-family: "Playfair Display", Georgia, serif;
@@ -331,10 +358,10 @@
         color: var(--ink);
 
         /* ellipsis: "..."; */
-        max-width: 200px;
-        white-space: nowrap;
+        /* max-width: 150px; */
+        /* white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;
+        text-overflow: ellipsis; */
       }
 
       .person-dates {
@@ -473,13 +500,18 @@
         isLastChild = true,
       ) {
         let nodeHtml = `<div style="width:100%">`;
-        nodeHtml +=
-          '<div style="position:relative;flex:1;height:170px;display:flex;align-items:center;flex-direction:column">';
 
-        const isCouple = node.spouse ? true : false;
+        nodeHtml +=
+          `<div style="position:relative;height:150px;display:flex;align-items:center;flex-direction:column">`;
+
         // erase overhangs from parent connection lines for better visuals
-        if (generation > 1 && isFirstChild && !isLastChild) {
+        const isCouple = node.spouse ? true : false;
+        const singleChildCouple = isCouple && isFirstChild && isLastChild;
+        if (generation > 1 && isFirstChild && (!isLastChild || singleChildCouple)) {
           nodeHtml += `<div class="connection-top-left-edge ${isCouple ? "is-couple" : ""}"></div>`;
+          if (singleChildCouple) {
+            nodeHtml += `<div class="connection-top-left-edge-single-couple"></div>`;
+          }
         }
         if (generation > 1 && isLastChild && !isFirstChild) {
           nodeHtml += `<div class="connection-top-right-edge ${isCouple ? "is-couple" : ""}"></div>`;
@@ -488,11 +520,9 @@
 
         if (node.children && node.children.length > 0) {
           const multipleChildren = node.children.length > 1;
-          nodeHtml += multipleChildren
-            ? renderMultipleChildrenConnection()
-            : renderSingleChildConnection();
+          nodeHtml +=renderConnectionToChildren();
           nodeHtml += "</div>"; // close person + connection container div
-          nodeHtml += '<div class="siblings">';
+          nodeHtml += `<div class="siblings ${multipleChildren ? "multiple-children" : ""}">`;
           for (let i = 0; i < node.children.length; i++) {
             const child = node.children[i];
             const isFirstChild = i === 0;
@@ -511,7 +541,7 @@
         nodeHtml += "</div>";
         return nodeHtml;
       }
-      function renderSingleChildConnection() {
+      function renderConnectionToChildren() {
         // flex-1 makes it take rest of parent (person+connection)'s static height
         // this makes all the parent+connection containers the same height,
         // even when some people have multi-line names.
@@ -519,20 +549,6 @@
                 <div class="grid-two-cols" style="flex:1">
                     <div class="line-right"></div>
                     <div></div>
-                    <div class="line-right"></div>
-                    <div></div>
-                </div>
-                `;
-      }
-      function renderMultipleChildrenConnection() {
-        // flex-1 makes it take rest of parent (person+connection)'s static height,
-        // see comment above in renderSingleChildConnection.
-        return `
-                <div class="grid-two-cols" style="flex:1">
-                    <div class="line-right"></div>
-                    <div></div>
-                    <div class="line-top"></div>
-                    <div class="line-top"></div>
                 </div>
                 `;
       }
@@ -575,6 +591,9 @@
                 children: [
                   {
                     name: "GrandGrandChild00",
+                    spouse: {
+                        name: "GrandGrandChild00 spouse",
+                    }
                   },
                   {
                     name: "GrandGrandChild1",
@@ -606,6 +625,17 @@
                     children: [
                       {
                         name: "GreatGrandChild1",
+                        spouse: {
+                          name: "GreatGrandChild1 spouse",
+                        },
+                        children: [
+                          {
+                            name: "GreatGreatGrandChild1",
+                          },
+                          {
+                            name: "GreatGreatGrandChild2",
+                          },
+                        ],
                       },
                       {
                         name: "GreatGrandChild2",
@@ -621,12 +651,20 @@
           },
           {
             name: "Child3",
+            spouse: {
+              name: "Child3 spouse",
+            },
           },
           {
             name: "Child4",
             spouse: {
               name: "Child4 spouse",
             },
+            children: [
+              {
+                name: "GrandChild2",
+              },
+            ],
           },
         ],
       };
