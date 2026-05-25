@@ -161,78 +161,18 @@
       }
 
       .siblings {
-        padding-top: var(--vertical-connect-line-height);
         display: flex;
         justify-content: center;
         flex-direction: row;
         align-items: flex-start;
-        gap: 10px;
-      }
-      .siblings.multiple-children {
-        border-top: var(--line-width) solid var(--line);
+        /* gap: 10px; */
       }
 
-      .connection-top-left-corner {
-        position: absolute;
-        top: calc(
-          var(--vertical-connect-line-height) * -1 + var(--line-width) * -2
-        );
-        height: calc(var(--vertical-connect-line-height) * 1);
-        left: 0;
-        right: 50%;
-        border-top: calc(var(--line-width) * 3) solid var(--cream);
-        border-right: var(--line-width) solid var(--line);
-      }
-      .connection-top-left-corner.is-couple {
-        /* move it to the left so that we're pointing to center of child spouse instead of
-         center of couple (heart)   */
-        right: calc(
-          50% + var(--person-width) / 2 + var(--heart-width) / 2 +
-            var(--person-margin)
-        );
-      }
-      .connection-top-right-corner {
-        position: absolute;
-        top: calc(
-          var(--vertical-connect-line-height) * -1 + var(--line-width) * -2
-        );
-        height: calc(var(--vertical-connect-line-height) * 1);
-        left: 50%;
-        right: 0;
-        border-top: calc(var(--line-width) * 3) solid var(--cream);
-        border-left: var(--line-width) solid var(--line);
-      }
-      .connection-top-right-corner.is-couple {
-        /* move it to the left so that we're pointing to center of child spouse instead of
-         center of couple (heart)   */
-        left: calc(
-          50% - var(--person-width) / 2 - var(--heart-width) / 2 -
-            var(--person-margin)
-        );
-      }
-
-      .connection-top-single-couple {
-        position: absolute;
-        top: calc(
-          var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
-        );
-        height: calc(var(--vertical-connect-line-height) * 1);
-        /* for single-child couple, we want the top border from center of child spouse to couple heart center */
-        left: calc(
-          50% - var(--person-width) / 2 - var(--heart-width) / 2 -
-            var(--person-margin)
-        );
-        right: 50%;
-        border-top: calc(var(--line-width) * 1) solid var(--line);
-      }
-
-      /* vertical line to single or middle child */
-      .person.single-or-middle-child::after {
+      /* vertical line above child */
+      .photo:not(.is-spouse)::after {
         content: " ";
         position: absolute;
-        top: calc(
-          var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
-        );
+        top: calc(var(--vertical-connect-line-height) * -1);
         height: calc(var(--vertical-connect-line-height) * 1);
         left: 0;
         right: 50%;
@@ -253,6 +193,7 @@
       }
 
       .family-node {
+        padding-top: var(--vertical-connect-line-height);
         position: relative;
         /* fixed total height controls how tall the flexible lines between generations are. */
         /* the height includes the person card and the connecting lines */
@@ -262,9 +203,81 @@
         flex-direction: column;
       }
 
+      /* .family-node.single-child:not(.has-spouse) {
+        padding-top: 0;
+      } */
+
+      .family-node.middle-child {
+        /* for middle children, just a full top border */
+        border-top: calc(var(--line-width) * 1) solid var(--line);
+      }
+
+      .family-node.first-of-children::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        height: calc(var(--vertical-connect-line-height) * 1);
+        left: 50%;
+        right: 0;
+        border-top: calc(var(--line-width) * 1) solid var(--line);
+
+        /* needed because the .photo vertical line is hidden by this absolute div */
+        border-left: calc(var(--line-width) * 1) solid var(--line);
+      }
+      .family-node.first-of-children.has-spouse::after {
+        /* move it to the left so that we're pointing to center of child spouse instead of
+         center of couple (heart)   */
+        left: calc(
+          50% - var(--person-width) / 2 - var(--heart-width) / 2 -
+            var(--person-margin)
+        );
+      }
+
+      .family-node.last-of-children::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        height: calc(var(--vertical-connect-line-height) * 1);
+        left: 0;
+        right: 50%;
+        border-top: calc(var(--line-width) * 1) solid var(--line);
+
+        /* needed because the .photo vertical line is hidden by this absolute div */
+        border-right: calc(var(--line-width) * 1) solid var(--line);
+      }
+      .family-node.last-of-children.has-spouse::after {
+        /* move it to the left so that we're pointing to center of child spouse instead of
+         center of couple (heart)   */
+        right: calc(
+          50% + var(--person-width) / 2 + var(--heart-width) / 2 +
+            var(--person-margin)
+        );
+      }
+
+      .family-node.single-child:not(.has-spouse) {
+        /* for single children, no horizontal border */
+        border-top: none;
+      }
+
+      .family-node.single-child.has-spouse::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        height: calc(var(--vertical-connect-line-height) * 1);
+        /* for single-child couple, we want the top border from center of child spouse to couple heart center */
+        left: calc(
+          50% - var(--person-width) / 2 - var(--heart-width) / 2 -
+            var(--person-margin)
+        );
+        right: 50%;
+        border-top: calc(var(--line-width) * 1) solid var(--line);
+
+        /* needed because the .photo vertical line is hidden by this absolute div */
+        border-left: calc(var(--line-width) * 1) solid var(--line);
+      }
+
       /* ── Person card ── */
       .person {
-        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -275,16 +288,10 @@
         /* border-bottom: var(--line-width) solid var(--light-green); */
       }
 
-      /* .person:first-child {
-            align-items: flex-start;
-          }
-          .person:last-child {
-          } */
-      /* .person.spouse {
-            width: 110px;
-          } */
-
       .photo {
+        /* anchor for vertical lines ::after */
+        position: relative;
+
         width: var(--person-width);
         /* padding: 10px; */
         height: var(--person-width);
@@ -540,7 +547,7 @@
         let coupleHtml = `<div class="couple gen-${generation}">`;
         // person.spouse exists
         coupleHtml += `<div class="spouse-left">`;
-        coupleHtml += `<div class="person${isSingleOrMiddleChild ? " single-or-middle-child" : ""}" style="align-items: flex-end">`;
+        coupleHtml += `<div class="person" style="align-items: flex-end">`;
         coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div></div>`;
         coupleHtml += `</div>`;
@@ -548,19 +555,19 @@
         coupleHtml += `<div class="couple-heart">♥</div>`;
         coupleHtml += `<div class="spouse-right">`;
         coupleHtml += `<div class="person" style="align-items: flex-start">`;
-        coupleHtml += `<div class="photo" style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
+        coupleHtml += `<div class="photo " style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div></div>`;
         coupleHtml += `</div>`;
         coupleHtml += `</div>`;
         coupleHtml += `</div>`;
         return coupleHtml;
       }
-      function renderPerson(person, generation, isSingleOrMiddleChild) {
+      function renderPerson(person, generation) {
         let personHtml = "";
         if (person.spouse) {
-          personHtml += renderCouple(person, generation, isSingleOrMiddleChild);
+          personHtml += renderCouple(person, generation);
         } else {
-          personHtml += `<div class="person gen-${generation}${isSingleOrMiddleChild ? " single-or-middle-child" : ""}">`;
+          personHtml += `<div class="person gen-${generation}">`;
           personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
           personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div></div>`;
           personHtml += `</div>`;
@@ -579,38 +586,25 @@
         // ( '|--' for first,  '--|' for last family-node).
         let nodeHtml = "<div style='flex: 1;'>";
 
-        nodeHtml += `<div class="family-node">`;
+        const borderClass =
+          generation == 1
+            ? ""
+            : isFirstChild && isLastChild
+              ? "single-child"
+              : isFirstChild
+                ? "first-of-children"
+                : isLastChild
+                  ? "last-of-children"
+                  : "middle-child";
 
-        // erase overhangs from parent connection lines for better visuals
-        const isCouple = node.spouse ? true : false;
-        const singleChildCouple = isCouple && isFirstChild && isLastChild;
-        if (
-          generation > 1 &&
-          isFirstChild &&
-          (!isLastChild || singleChildCouple)
-        ) {
-          // erase left edge of .siblings border and create vertical line to top-center of child.
-          nodeHtml += `<div class="connection-top-left-corner ${isCouple ? "is-couple" : ""}"></div>`;
-          // special top border to complete corner connection to single child with spouse.
-          // needed since single-child .siblings doesn't have top border.
-          if (singleChildCouple) {
-            nodeHtml += `<div class="connection-top-single-couple"></div>`;
-          }
-        }
-        if (generation > 1 && isLastChild && !isFirstChild) {
-          // erase right edge of .siblings border and create vertical line to top-center of child.
-          nodeHtml += `<div class="connection-top-right-corner ${isCouple ? "is-couple" : ""}"></div>`;
-        }
-        const isSingleOrMiddleChild =
-          (!node.spouse && isFirstChild && isLastChild) ||
-          (!isFirstChild && !isLastChild);
-        nodeHtml += renderPerson(node, generation, isSingleOrMiddleChild);
+        nodeHtml += `<div class="family-node ${borderClass} ${node.spouse ? "has-spouse" : ""}">`;
+
+        nodeHtml += renderPerson(node, generation);
 
         if (node.children && node.children.length > 0) {
-          const multipleChildren = node.children.length > 1;
           nodeHtml += renderConnectionToChildren();
           nodeHtml += "</div>"; // close person + connection container div
-          nodeHtml += `<div class="siblings ${multipleChildren ? "multiple-children" : ""}">`;
+          nodeHtml += `<div class="siblings">`;
           for (let i = 0; i < node.children.length; i++) {
             const child = node.children[i];
             const isFirstChild = i === 0;
@@ -767,13 +761,16 @@
             children: [
               {
                 name: "GrandChild2",
+                spouse: {
+                  name: "GrandChild2 spouse",
+                },
               },
               {
                 name: "GrandChild3",
               },
-            //   {
-            //     name: "GrandChild4",
-            //   },
+              //   {
+              //     name: "GrandChild4",
+              //   },
             ],
           },
         ],
