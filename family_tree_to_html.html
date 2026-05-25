@@ -134,28 +134,8 @@
         width: 100%;
       }
 
-      .line-top-right {
-        border-top: var(--line-width) solid var(--line);
-        border-right: var(--line-width) solid var(--line);
-      }
-
-      .line-left-top-right {
-        border-top: var(--line-width) solid var(--line);
-        border-right: var(--line-width) solid var(--line);
-        border-left: var(--line-width) solid var(--line);
-      }
-
       .line-right {
         border-right: var(--line-width) solid var(--line);
-      }
-
-      .line-left-top {
-        border-top: var(--line-width) solid var(--line);
-        border-left: var(--line-width) solid var(--line);
-      }
-
-      .line-top {
-        border-top: var(--line-width) solid var(--line);
       }
 
       .couple {
@@ -231,7 +211,7 @@
         );
       }
 
-      .connection-top-left-corner-single-couple {
+      .connection-top-single-couple {
         position: absolute;
         top: calc(
           var(--vertical-connect-line-height) * -1 + var(--line-width) * -1
@@ -274,7 +254,8 @@
 
       .family-node {
         position: relative;
-        /* height controls how tall the flexible lines between generations are */
+        /* fixed total height controls how tall the flexible lines between generations are. */
+        /* the height includes the person card and the connecting lines */
         height: 130px;
         display: flex;
         align-items: center;
@@ -592,6 +573,10 @@
         isFirstChild = true,
         isLastChild = true,
       ) {
+        // flex:1 ensure first/last family-node hugs left/right edge of .siblings div.
+        // .siblings with multiple family-nodes has border-top, and we use connection-top-left/right-corner
+        // to replace '---' edge with corners connecting to top center of family-node
+        // ( '|--' for first,  '--|' for last family-node).
         let nodeHtml = "<div style='flex: 1;'>";
 
         nodeHtml += `<div class="family-node">`;
@@ -604,12 +589,16 @@
           isFirstChild &&
           (!isLastChild || singleChildCouple)
         ) {
+          // erase left edge of .siblings border and create vertical line to top-center of child.
           nodeHtml += `<div class="connection-top-left-corner ${isCouple ? "is-couple" : ""}"></div>`;
+          // special top border to complete corner connection to single child with spouse.
+          // needed since single-child .siblings doesn't have top border.
           if (singleChildCouple) {
-            nodeHtml += `<div class="connection-top-left-corner-single-couple"></div>`;
+            nodeHtml += `<div class="connection-top-single-couple"></div>`;
           }
         }
         if (generation > 1 && isLastChild && !isFirstChild) {
+          // erase right edge of .siblings border and create vertical line to top-center of child.
           nodeHtml += `<div class="connection-top-right-corner ${isCouple ? "is-couple" : ""}"></div>`;
         }
         const isSingleOrMiddleChild =
@@ -641,9 +630,9 @@
         return nodeHtml;
       }
       function renderConnectionToChildren() {
-        // flex-1 makes it take rest of parent (person+connection)'s static height
-        // this makes all the parent+connection containers the same height,
-        // even when some people have multi-line names.
+        // flex:1 makes it take rest of family-node (person card + line)'s static height.
+        // static height on family-node ensure all children align horizontally even
+        // if person card heights differ between siblings, for example due to multi-line names.
         return `
                 <div class="grid-two-cols" style="flex:1">
                     <div class="line-right"></div>
@@ -684,9 +673,9 @@
             children: [
               {
                 name: "GrandChild0",
-                // spouse: {
-                //   name: "GrandChild0 spouse",
-                // },
+                spouse: {
+                  name: "GrandChild0 spouse",
+                },
                 children: [
                   {
                     name: "GrandGrandChild00",
@@ -782,9 +771,9 @@
               {
                 name: "GrandChild3",
               },
-              {
-                name: "GrandChild4",
-              },
+            //   {
+            //     name: "GrandChild4",
+            //   },
             ],
           },
         ],
