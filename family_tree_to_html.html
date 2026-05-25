@@ -168,8 +168,9 @@
         /* gap: 10px; */
       }
 
-      /* vertical line above child */
-      .photo:not(.is-spouse)::after {
+      /* vertical line above child - doesn't work so commented out. see family-node ::after instead*/
+      /* the rendered ::after is invisible, maybe z-index issues */
+      /* .photo:not(.is-spouse)::after {
         content: " ";
         position: absolute;
         top: calc(var(--vertical-connect-line-height) * -1);
@@ -177,7 +178,7 @@
         left: 0;
         right: 50%;
         border-right: calc(var(--line-width) * 1) solid var(--line);
-      }
+      } */
 
       .couple-heart {
         width: var(--heart-width);
@@ -203,14 +204,42 @@
         flex-direction: column;
       }
 
-      /* .family-node.single-child:not(.has-spouse) {
-        padding-top: 0;
-      } */
+      .family-node.single-child:not(.has-spouse)::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        height: calc(var(--vertical-connect-line-height) * 1);
+        left: 0;
+        right: 50%;
+
+        /* needed because the .photo vertical line is hidden by this absolute div */
+        border-right: calc(var(--line-width) * 1) solid var(--line);
+      }
 
       .family-node.middle-child {
-        /* for middle children, just a full top border */
+        /* for middle children, a full top border */
         border-top: calc(var(--line-width) * 1) solid var(--line);
       }
+      .family-node.middle-child::after {
+        content: " ";
+        position: absolute;
+        top: 0;
+        height: calc(var(--vertical-connect-line-height) * 1);
+        left: 0;
+        right: 50%;
+
+        /* needed because the .photo vertical line is hidden by this absolute div */
+        border-right: calc(var(--line-width) * 1) solid var(--line);
+      }
+      .family-node.middle-child.has-spouse::after {
+        /* move it to the left so that we're pointing to center of child spouse instead of
+         center of couple (heart)   */
+        right: calc(
+          50% + var(--person-width) / 2 + var(--heart-width) / 2 +
+            var(--person-margin)
+        );
+      }
+
 
       .family-node.first-of-children::after {
         content: " ";
@@ -252,11 +281,6 @@
           50% + var(--person-width) / 2 + var(--heart-width) / 2 +
             var(--person-margin)
         );
-      }
-
-      .family-node.single-child:not(.has-spouse) {
-        /* for single children, no horizontal border */
-        border-top: none;
       }
 
       .family-node.single-child.has-spouse::after {
@@ -423,6 +447,14 @@
       .person-info {
         text-align: center;
         margin-top: 7px;
+
+        /* allow multiline text but cut off with ellipsis */
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        -webkit-box-orient: vertical;
+        box-orient: vertical;
+        overflow: hidden;
       }
       .spouse-left .person-info {
         text-align: right;
@@ -700,9 +732,9 @@
           },
           {
             name: "Child2",
-            spouse: {
-              name: "Child2 spouse",
-            },
+            // spouse: {
+            //   name: "Child2 spouse",
+            // },
             children: [
               {
                 name: "GrandChild1",
@@ -765,9 +797,9 @@
                   name: "GrandChild2 spouse",
                 },
               },
-              {
-                name: "GrandChild3",
-              },
+            //   {
+            //     name: "GrandChild3",
+            //   },
               //   {
               //     name: "GrandChild4",
               //   },
