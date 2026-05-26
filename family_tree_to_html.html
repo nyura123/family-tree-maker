@@ -245,7 +245,8 @@
         content: "";
         position: absolute;
         top: 0;
-        height: calc(var(--vertical-connect-line-height) * 1);
+         /* subtract line-width to account for top border */
+        height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
         left: 50%;
         right: 0;
         border-top: calc(var(--line-width) * 1) solid var(--line);
@@ -266,7 +267,8 @@
         content: "";
         position: absolute;
         top: 0;
-        height: calc(var(--vertical-connect-line-height) * 1);
+         /* subtract line-width to account for top border */
+        height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
         left: 0;
         right: 50%;
         border-top: calc(var(--line-width) * 1) solid var(--line);
@@ -287,7 +289,8 @@
         content: "";
         position: absolute;
         top: 0;
-        height: calc(var(--vertical-connect-line-height) * 1);
+         /* subtract line-width to account for top border */
+        height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
         /* for single-child couple, we want the top border from center of child spouse to couple heart center */
         left: calc(
           50% - var(--person-width) / 2 - var(--heart-width) / 2 -
