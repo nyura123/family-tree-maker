@@ -22,6 +22,7 @@
         --heart-width: 18px;
         --person-margin: 5px;
         --spouse-lighten-pcnt: 40%;
+        --border-radius: 7px;
       }
 
       #drop-zone {
@@ -240,19 +241,21 @@
         );
       }
 
-
       .family-node.first-of-children::after {
         content: "";
         position: absolute;
         top: 0;
-         /* subtract line-width to account for top border */
-        height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
+        /* subtract line-width to account for top border */
+        height: calc(
+          var(--vertical-connect-line-height) * 1 - var(--line-width)
+        );
         left: 50%;
         right: 0;
         border-top: calc(var(--line-width) * 1) solid var(--line);
 
         /* needed because the .photo vertical line is hidden by this absolute div */
         border-left: calc(var(--line-width) * 1) solid var(--line);
+        border-top-left-radius: var(--border-radius);
       }
       .family-node.first-of-children.has-spouse::after {
         /* move it to the left so that we're pointing to center of child spouse instead of
@@ -267,14 +270,17 @@
         content: "";
         position: absolute;
         top: 0;
-         /* subtract line-width to account for top border */
-        height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
+        /* subtract line-width to account for top border */
+        height: calc(
+          var(--vertical-connect-line-height) * 1 - var(--line-width)
+        );
         left: 0;
         right: 50%;
         border-top: calc(var(--line-width) * 1) solid var(--line);
 
         /* needed because the .photo vertical line is hidden by this absolute div */
         border-right: calc(var(--line-width) * 1) solid var(--line);
+        border-top-right-radius: var(--border-radius);
       }
       .family-node.last-of-children.has-spouse::after {
         /* move it to the left so that we're pointing to center of child spouse instead of
@@ -289,8 +295,10 @@
         content: "";
         position: absolute;
         top: 0;
-         /* subtract line-width to account for top border */
-        height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
+        /* subtract line-width to account for top border */
+        height: calc(
+          var(--vertical-connect-line-height) * 1 - var(--line-width)
+        );
         /* for single-child couple, we want the top border from center of child spouse to couple heart center */
         left: calc(
           50% - var(--person-width) / 2 - var(--heart-width) / 2 -
@@ -301,6 +309,7 @@
 
         /* needed because the .photo vertical line is hidden by this absolute div */
         border-left: calc(var(--line-width) * 1) solid var(--line);
+        border-top-left-radius: var(--border-radius);
       }
 
       /* ── Person card ── */
@@ -800,9 +809,9 @@
                   name: "GrandChild2 spouse",
                 },
               },
-            //   {
-            //     name: "GrandChild3",
-            //   },
+              //   {
+              //     name: "GrandChild3",
+              //   },
               //   {
               //     name: "GrandChild4",
               //   },
