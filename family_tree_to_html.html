@@ -708,7 +708,7 @@
           if (trees.length > 1 && tree !== trees[trees.length - 1]) {
             allTreesHtml += `
               <div style="text-align: center; margin: 2rem 0; color: var(--muted);">
-                <span style="font-size: 1.5rem;">Next Family ✦</span>
+                <span style="font-size: 1.5rem;">✦ Next Family ✦</span>
               </div>
             `;
           }
@@ -1148,7 +1148,7 @@
       <i class="ti ti-file-upload" aria-hidden="true"></i>
       <strong>Drop your family file here</strong>
       <p>or click to browse — JSON or GEDCOM (.ged) format</p>
-      <input type="file" id="file-input" accept=".json,.ged,.gedcom,text/plain" />
+      <input type="file" id="file-input" accept=".json,.ged,.gedcom,.txt,text/plain" />
     </div>
 
     <div id="json-input">
@@ -1164,6 +1164,7 @@
     <button onclick="exportAsHtml()">Export as HTML</button>
     <button onclick="exportGedcomAsJson()">Export GEDCOM as JSON</button>
     <button onclick="openHTMLInNewTab()">Open in New Tab</button>
+    <a href="https://chronoplexsoftware.com/myfamilytree/samples/The English and British Kings and Queens.ged" target="_blank">Load British Royal GEDCOM</a>
     <script>
       // handle file drag and drop for the drop zone
       const dropZone = document.getElementById("drop-zone");
@@ -1192,7 +1193,8 @@
         const r = new FileReader();
         r.onload = (e) => {
           const text = e.target.result;
-          if (isGedcomFile(f)) {
+          const looksLikeGedcom = /^0\s+/.test(text);
+          if (isGedcomFile(f) || looksLikeGedcom) {
             document.getElementById("family-json-input").value = text;
             updateFamilyTree(true);
           } else {
