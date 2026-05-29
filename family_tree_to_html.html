@@ -23,6 +23,7 @@
         --person-margin: 5px;
         --spouse-lighten-pcnt: 40%;
         --border-radius: 7px;
+        --family-node-height: 150px;
       }
 
       #drop-zone {
@@ -195,11 +196,12 @@
       }
 
       .family-node {
+        min-width: 120px;
         padding-top: var(--vertical-connect-line-height);
         position: relative;
         /* fixed total height controls how tall the flexible lines between generations are. */
         /* the height includes the person card and the connecting lines */
-        height: 130px;
+        height: var(--family-node-height);
         display: flex;
         align-items: center;
         flex-direction: column;
@@ -208,6 +210,7 @@
       .family-node.single-child:not(.has-spouse)::after {
         content: "";
         position: absolute;
+        z-index: 1;
         top: 0;
         height: calc(var(--vertical-connect-line-height) * 1);
         left: 0;
@@ -224,6 +227,7 @@
       .family-node.middle-child::after {
         content: "";
         position: absolute;
+        z-index: 1;
         top: 0;
         height: calc(var(--vertical-connect-line-height) * 1);
         left: 0;
@@ -244,6 +248,7 @@
       .family-node.first-of-children::after {
         content: "";
         position: absolute;
+        z-index: 1;
         top: 0;
         /* subtract line-width to account for top border */
         height: calc(
@@ -269,6 +274,7 @@
       .family-node.last-of-children::after {
         content: "";
         position: absolute;
+        z-index: 1;
         top: 0;
         /* subtract line-width to account for top border */
         height: calc(
@@ -294,6 +300,7 @@
       .family-node.single-child.has-spouse::after {
         content: "";
         position: absolute;
+        z-index: 1;
         top: 0;
         /* subtract line-width to account for top border */
         height: calc(
@@ -497,11 +504,16 @@
         letter-spacing: 0.02em;
       }
 
-      .person-note {
-        font-size: 0.65rem;
-        color: var(--rust);
-        margin-top: 2px;
-        font-style: italic;
+      .person-marriage-branch {
+        margin-top: 3px;
+        padding: 1px 6px;
+        border: 1px solid var(--gold-lt);
+        border-radius: 999px;
+        font-size: 0.58rem;
+        color: var(--brown);
+        background: color-mix(in srgb, var(--gold-lt), white 55%);
+        letter-spacing: 0.03em;
+        display: inline-block;
       }
 
       /* ── Animations ── */
@@ -563,7 +575,7 @@
     </style>
     <script>
       function getInitials(name) {
-        const parts = name.split(" ").filter((part) => part.length > 0);
+        const parts = (name || "").split(" ").filter((part) => part.length > 0);
         if (parts.length >= 2) {
           const lastNameInitial = parts[1][0];
           // check that lastNameInitial is a ascii
@@ -574,7 +586,7 @@
             (isLastNameAscii || isLastNameRussian ? lastNameInitial : "")
           );
         } else {
-          return name.slice(0, 1);
+          return (name || "").slice(0, 1);
         }
       }
       function renderPersonStyle(person) {
@@ -593,14 +605,19 @@
         coupleHtml += `<div class="spouse-left">`;
         coupleHtml += `<div class="person" style="align-items: flex-end">`;
         coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
-        coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div></div>`;
+        coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
+        if (person.marriageLabel) coupleHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
+        if (person.dates) coupleHtml += `<div class="person-dates">${person.dates}</div>`;
+        coupleHtml += `</div>`;
         coupleHtml += `</div>`;
         coupleHtml += `</div>`;
         coupleHtml += `<div class="couple-heart">♥</div>`;
         coupleHtml += `<div class="spouse-right">`;
         coupleHtml += `<div class="person" style="align-items: flex-start">`;
         coupleHtml += `<div class="photo " style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
-        coupleHtml += `<div class="person-info"><div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div></div>`;
+        coupleHtml += `<div class="person-info"><div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div>`;
+        if (person.spouse.dates) coupleHtml += `<div class="person-dates">${person.spouse.dates}</div>`;
+        coupleHtml += `</div>`;
         coupleHtml += `</div>`;
         coupleHtml += `</div>`;
         coupleHtml += `</div>`;
@@ -613,8 +630,10 @@
         } else {
           personHtml += `<div class="person gen-${generation}">`;
           personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
-          personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div></div>`;
-          personHtml += `</div>`;
+          personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
+          if (person.marriageLabel) personHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
+          if (person.dates) personHtml += `<div class="person-dates">${person.dates}</div>`;
+          personHtml += `</div></div>`;
         }
         return personHtml;
       }
@@ -622,7 +641,7 @@
         node,
         generation = 1,
         isFirstChild = true,
-        isLastChild = true,
+        isLastChild = true
       ) {
         // flex:1 ensure first/last family-node hugs left/right edge of .siblings div.
         // .siblings with multiple family-nodes has border-top, and we use connection-top-left/right-corner
@@ -657,7 +676,7 @@
               child,
               generation + 1,
               isFirstChild,
-              isLastChild,
+              isLastChild
             );
           }
           nodeHtml += "</div>"; // close siblings container div
@@ -678,20 +697,34 @@
                 </div>
                 `;
       }
-      function familyTreeJsonToHtml(title, subtitle, familyTree) {
-        const rootNode = renderNode(familyTree);
+      function familyTreeJsonToHtml(title, subtitle, familyTrees) {
+        // familyTrees can be a single object or an array
+        const trees = Array.isArray(familyTrees) ? familyTrees : [familyTrees];
+        let allTreesHtml = '';
+        for (const tree of trees) {
+          allTreesHtml += renderNode(tree);
+
+          // render a pretty separator between multiple family trees, except after the last one
+          if (trees.length > 1 && tree !== trees[trees.length - 1]) {
+            allTreesHtml += `
+              <div style="text-align: center; margin: 2rem 0; color: var(--muted);">
+                <span style="font-size: 1.5rem;">Next Family ✦</span>
+              </div>
+            `;
+          }
+        }
         return (
           `
-                <div class="family-tree">
-      <header>
-        <span class="ornament">✦</span>
-        <h1 class="family-name">${title}</h1>
-        <p class="family-sub">${subtitle}</p>
-        <span class="ornament">✦</span>
-      </header>` +
-          rootNode +
-          `</div>
-                `
+            <div class="family-tree">
+              <header>
+                <span class="ornament">✦</span>
+                <h1 class="family-name">${title}</h1>
+                <p class="family-sub">${subtitle}</p>
+                <span class="ornament">✦</span>
+              </header>` +
+            allTreesHtml +
+            `</div>
+          `
         );
       }
 
@@ -699,6 +732,7 @@
         title: "The Smith Family",
         subtitle: "A record of four generations",
         name: "Grampa",
+        dates: "b.1920",
         spouse: {
           name: "Gramma",
         },
@@ -819,14 +853,302 @@
           },
         ],
       };
+
+      // ── GEDCOM Parser ─────────────────────────────────────────────────────
+
+      function parseGedcom(text) {
+        const individuals = {};
+        const families    = {};
+        if (!text || typeof text !== "string") {
+          return { individuals, families };
+        }
+        const lines = text.split(/\r?\n/);
+        let rec    = null;
+        let subTag = null;
+
+        for (let i = 0; i < lines.length; i++) {
+          let raw = lines[i];
+          raw = raw.trim();
+          if (!raw) continue;
+          const m = raw.match(/^(\d+)\s+(?:(@[^@]+@)\s+)?(\S+)(?:\s+(.*))?$/);
+          if (!m) continue;
+          const level = parseInt(m[1]);
+          const xref  = m[2] ? m[2].replace(/@/g, "") : null;
+          const tag   = m[3].toUpperCase();
+          const value = (m[4] || "").trim();
+
+          if (level === 0) {
+            subTag = null;
+            if (tag === "INDI" && xref) {
+              rec = { type: "INDI", id: xref, famcList: [], famsList: [] };
+              individuals[xref] = rec;
+            } else if (tag === "FAM" && xref) {
+              rec = { type: "FAM", id: xref, chilIds: [] };
+              families[xref] = rec;
+            } else { 
+              rec = null;
+            }
+            continue;
+          }
+
+          if (!rec) continue;
+          if (level === 1) subTag = tag;
+
+          if (rec.type === "INDI") {
+            if (tag === "NAME" && level === 1) {
+              if (!rec.name) {
+                // some records contain "NAME //", don't override existing name with blanks
+                rec.name = value.replace(/\//g, " ").replace(/\s+/g, " ").trim();
+              }
+            } else if (tag === "SEX"  && level === 1) { rec.sex = value;
+            } else if (tag === "BIRT" && level === 1) { rec.birth = rec.birth || {};
+            } else if (tag === "DEAT" && level === 1) { rec.death = rec.death || {};
+            } else if (tag === "DATE" && level === 2) {
+              if (subTag === "BIRT") { rec.birth = rec.birth || {}; rec.birth.date = value; }
+              else if (subTag === "DEAT") { rec.death = rec.death || {}; rec.death.date = value; }
+            } else if (tag === "PLAC" && level === 2) {
+              if (subTag === "BIRT") { rec.birth = rec.birth || {}; rec.birth.place = value; }
+              else if (subTag === "DEAT") { rec.death = rec.death || {}; rec.death.place = value; }
+            } else if (tag === "NOTE" && level === 1) {
+              rec.note = value;
+              // Look ahead for CONC and CONT lines to concatenate
+              let noteLines = [value];
+              while (i + 1 < lines.length) {
+                const nextRaw = lines[i + 1].trim();
+                const mNext = nextRaw.match(/^(\d+)\s+(\S+)(?:\s+(.*))?$/);
+                if (!mNext) break;
+                const nextLevel = parseInt(mNext[1]);
+                const nextTag = mNext[2].toUpperCase();
+                const nextValue = (mNext[3] || "").trim();
+                // console.log("looking for CONC/CONT, found:", { nextLevel, nextTag, nextValue });
+                if (nextTag === "CONC" && nextLevel === 2) {
+                  if (nextValue === "") {
+                    // console.log("CONC with empty value, adding newline");
+                    noteLines.push("\n"); // use <br> to represent newlines in HTML
+                  } else {
+                    noteLines.push(nextValue);
+                  }
+                  i++;
+                } else if (nextTag === "CONT" && nextLevel === 2) {
+                  if (nextValue === "") {
+                      // console.log("CONT with empty value, adding newline");
+                    noteLines.push("\n"); // use <br> to represent newlines in HTML
+                  } else {
+                    noteLines.push(nextValue);
+                  }
+                  i++;
+                } else {
+                  break;
+                }
+              }
+              rec.note = noteLines.join("");
+            }
+          } else if (rec.type === "FAM") {
+            if (tag === "HUSB" && level === 1) { rec.husbId = value.replace(/@/g, "");
+            } else if (tag === "WIFE" && level === 1) { rec.wifeId = value.replace(/@/g, "");
+            } else if (tag === "CHIL" && level === 1) { rec.chilIds.push(value.replace(/@/g, ""));
+            } else if (tag === "MARR" && level === 1) { rec.marr = rec.marr || {};
+            } else if (tag === "DATE" && level === 2 && subTag === "MARR") {
+              rec.marr = rec.marr || {}; rec.marr.date = value;
+            }
+          }
+        }
+
+        // go through families, and add to famcList for individuals appearing in childIds,
+        // and to famsList for individuals appearing in husbId/wifeId
+        for (const fam of Object.values(families)) {
+          for (const childId of fam.chilIds) {
+            const child = individuals[childId];
+            if (child) {
+              child.famcList.push(fam.id);
+            } else {
+              console.warn("no child found for id:", childId, "in family:", fam.id);
+            }
+          }
+          if (fam.husbId) {
+            const husb = individuals[fam.husbId];
+            if (husb) {
+              husb.famsList.push(fam.id);
+            } else {
+              console.warn("no husband found for id:", fam.husbId, "in family:", fam.id);
+            }
+          }
+          if (fam.wifeId) {
+            const wife = individuals[fam.wifeId];
+            if (wife) {
+              wife.famsList.push(fam.id);
+            } else {
+              console.warn("no wife found for id:", fam.wifeId, "in family:", fam.id);
+            }
+          }
+        }
+        // make sure famcList and famsList are unique and don't contain null/undefined values
+        for (const indi of Object.values(individuals)) {
+          indi.famcList = Array.from(new Set((indi.famcList || []).filter((id) => id)));
+          indi.famsList = Array.from(new Set((indi.famsList || []).filter((id) => id)));
+        } 
+        return { individuals, families };
+      }
+
+      function gedcomFormatDates(birth, death) {
+        const b = birth && birth.date ? birth.date : null;
+        const d = death && death.date ? death.date : null;
+        if (b && d) return b + " \u2013 " + d;
+        if (b) return "b.\u00a0" + b;
+        if (d) return "d.\u00a0" + d;
+        return "";
+      }
+
+      function gedcomToTree(individuals, families) {
+        function buildNodeVariants(personId, pathVisited = new Set()) {
+          if (!personId) return [];
+          const person = individuals[personId];
+          if (!person) {
+            console.warn("no person found for id:", personId);
+            return [];
+          }
+
+          const baseNode = {
+            name: person.name || "Unknown no name: " + `id: ${person.id || 'no id'}`,
+          };
+          const dates = gedcomFormatDates(person.birth, person.death);
+          if (dates) baseNode.dates = dates;
+          if (person.note) baseNode.note = person.note;
+
+          // filter to those ids in famsList that actually exist in families, in case some GEDCOM files have dangling references
+          const famIds = (person.famsList || []).filter((famId) => families[famId]);
+
+          const variants = [];
+          for (let idx = 0; idx < famIds.length; idx++) {
+            const famId = famIds[idx];
+            const visitKey = `${personId}|${famId}`;
+            if (pathVisited.has(visitKey)) {
+              // console.log("already visited person-family combination, skipping to avoid circular loop:", visitKey, person.name);
+              continue;
+            }
+
+            const fam = families[famId];
+            const node = { ...baseNode, familyId: famId } ; // , name: baseNode.name.replace(/\s*\(root \d+\)$/, "") + " " + visitKey }; // remove "(root i)" from variants below root level
+            if (famIds.length > 1) {
+              node.marriageLabel = `Marriage ${idx + 1} of ${famIds.length}`;
+            }
+
+            const spouseId = fam.husbId === personId ? fam.wifeId : fam.husbId;
+            if (spouseId) {
+              const spouse = individuals[spouseId];
+              if (spouse) {
+                node.spouse = {
+                  name: spouse.name || "Unknown spouse no name: " + `id: ${spouse.id || 'no id'}`,
+                };
+                const spouseDates = gedcomFormatDates(spouse.birth, spouse.death);
+                if (spouseDates) node.spouse.dates = spouseDates;
+                if (spouse.note) node.spouse.note = spouse.note;
+              }
+            }
+
+            const nextVisited = new Set(pathVisited);
+            nextVisited.add(visitKey);
+            // console.log('visiting person-family combination:', visitKey, person.name, "spouseId:", spouseId, "spouse name:", node.spouse ? node.spouse.name : "no spouse");
+            // if (spouseId) {
+            //   pathVisited.add(`${spouseId}|${famId}`);
+            //   console.log('also marking spouse-family combination as visited to avoid duplicate variant:', `${spouseId}|${famId}`);
+            // }
+
+            const children = [];
+            for (const childId of (fam.chilIds || [])) {
+              children.push(...buildNodeVariants(childId, nextVisited));
+            }
+            if (children.length > 0) node.children = children;
+
+            variants.push(node);
+          }
+
+          return variants.length > 0 ? variants : [baseNode];
+        }
+
+        const roots = [];
+        for (const individual of Object.values(individuals)) {
+          const childFamcIds = (individual.famcList || []).filter((famId) => families[famId]);
+          if (childFamcIds.length > 0) {
+            // console.log('individual has parents, skipping as root:', individual.id, individual.name);
+            // console.log("full record", individual);
+            continue;
+          }
+          // roots.push(individual);
+          const spouseFamIds = (individual.famsList || []).filter((famId) => families[famId]);
+          let hasAncestor = false;
+          for (const famId of spouseFamIds) {
+            const fam = families[famId];
+            const spouseId = fam.husbId === individual.id ? fam.wifeId : fam.husbId;
+            const spouse = individuals[spouseId];
+            if (spouse) {
+              const spouseFamcIds = (spouse.famcList || []).filter((famId) => families[famId]);
+              if (spouseFamcIds.length > 0) {
+                hasAncestor = true;
+                // console.log('spouse has parents, so individual is not a root. individual: ', individual.id, individual.name, ", spouse: ", spouse.id, spouse.name);
+                break;
+              }
+            }
+          }
+          if (!hasAncestor) {
+            // console.log("adding root individual:", individual.id, individual.name);
+            roots.push(individual);
+          }
+        }
+
+        function getTreeSize(personId, visited = new Set()) {
+          if (visited.has(personId)) return 0; // avoid infinite loops in case of circular references
+          visited.add(personId);
+          const person = individuals[personId];
+          if (!person) return 0;
+          let size = 1; // count self
+          const famIds = (person.famsList || []).filter((famId) => families[famId]);
+          for (const famId of famIds) {
+            const fam = families[famId];
+            const spouseId = fam.husbId === personId ? fam.wifeId : fam.husbId;
+            if (spouseId) {
+              size += 1; // count spouse
+              size += getTreeSize(spouseId, visited);
+            }
+            for (const childId of (fam.chilIds || [])) {
+              size += getTreeSize(childId, visited);
+            }
+          }
+          return size;
+        }
+
+        // sort roots by number of generations in their tree (descending), so that bigger trees are rendered first and get the top position on the page
+        roots.sort((a, b) => {
+          const aTreeSize = getTreeSize(a.id, new Set());
+          const bTreeSize = getTreeSize(b.id, new Set());
+          return bTreeSize - aTreeSize;
+        });
+
+        const trees = [];
+        const rootFamilyIds = new Set();
+        for (const root of roots) {
+          const familyNodes = buildNodeVariants(root.id);
+          for (const familyNode of familyNodes) {
+            if (familyNode.familyId) {
+              if (rootFamilyIds.has(familyNode.familyId)) {
+                // console.log("already rendered familyId, skipping duplicate tree variant:", familyNode.familyId, "node name:", familyNode.name);
+                continue;
+              }
+              rootFamilyIds.add(familyNode.familyId);
+            }
+            trees.push(familyNode);
+          }
+        }
+        return trees;
+      }
     </script>
   </head>
   <body>
     <div id="drop-zone" onclick="document.getElementById('file-input').click()">
       <i class="ti ti-file-upload" aria-hidden="true"></i>
-      <strong>Drop your .json family file here</strong>
-      <p>or click to browse — JSON format</p>
-      <input type="file" id="file-input" accept=".json,text/plain" />
+      <strong>Drop your family file here</strong>
+      <p>or click to browse — JSON or GEDCOM (.ged) format</p>
+      <input type="file" id="file-input" accept=".json,.ged,.gedcom,text/plain" />
     </div>
 
     <div id="json-input">
@@ -840,6 +1162,7 @@
 
     <button onclick="updateFamilyTree()">Update Family Tree</button>
     <button onclick="exportAsHtml()">Export as HTML</button>
+    <button onclick="exportGedcomAsJson()">Export GEDCOM as JSON</button>
     <button onclick="openHTMLInNewTab()">Open in New Tab</button>
     <script>
       // handle file drag and drop for the drop zone
@@ -855,39 +1178,62 @@
       dropZone.addEventListener("drop", (e) => {
         e.preventDefault();
         dropZone.classList.remove("drag-over");
-        if (e.dataTransfer.files[0]) {
-          readJsonFile(e.dataTransfer.files[0]);
-        }
+        if (e.dataTransfer.files[0]) readFamilyFile(e.dataTransfer.files[0]);
       });
       fileInput.addEventListener("change", (e) => {
-        if (e.target.files[0]) readJsonFile(e.target.files[0]);
+        if (e.target.files[0]) readFamilyFile(e.target.files[0]);
       });
-      function readJsonFile(f) {
+
+      function isGedcomFile(f) {
+        return /\.(ged|gedcom)$/i.test(f.name);
+      }
+
+      function readFamilyFile(f) {
         const r = new FileReader();
         r.onload = (e) => {
-          const prettyInput = JSON.stringify(
-            JSON.parse(e.target.result),
-            null,
-            2,
-          );
-          document.getElementById("family-json-input").value = prettyInput;
-          updateFamilyTree();
+          const text = e.target.result;
+          if (isGedcomFile(f)) {
+            document.getElementById("family-json-input").value = text;
+            updateFamilyTree(true);
+          } else {
+            const prettyInput = JSON.stringify(JSON.parse(text), null, 2);
+            document.getElementById("family-json-input").value = prettyInput;
+            updateFamilyTree(false);
+          }
         };
         r.readAsText(f);
       }
 
-      // parse the JSON from the textarea and update the family tree HTML
-      function updateFamilyTree() {
-        const input = document.getElementById("family-json-input").value;
+      // parse the textarea content (JSON or GEDCOM) and update the family tree
+      function updateFamilyTree(forceGedcom) {
+        const input = document.getElementById("family-json-input").value.trim();
+        // Detect GEDCOM by explicit flag or by content starting with a level-0 line
+        const looksLikeGedcom = forceGedcom || /^0\s+/.test(input);
         try {
-          const parsedJson = JSON.parse(input);
-
-          const title = parsedJson.title || "Family Tree";
-          const subtitle = parsedJson.subtitle || "";
-          document.getElementById("family-tree-container").innerHTML =
-            familyTreeJsonToHtml(title, subtitle, parsedJson);
+          if (looksLikeGedcom) {
+            const { individuals, families } = parseGedcom(input);
+            const trees = gedcomToTree(individuals, families);
+            // Compose a title and subtitle for GEDCOM with multiple roots
+            let surname = "Family";
+            if (trees.length === 1) {
+              const parts = (trees[0].name || "").split(" ");
+              surname = parts.length > 1 ? parts[parts.length - 1] : (parts[0] || "Family");
+            } else if (trees.length > 1) {
+              surname = "Multiple Families";
+            }
+            const title    = "The " + surname + " Family";
+            const subtitle = trees.length > 1 ? `A genealogical record with ${trees.length} roots` : "A genealogical record";
+            document.getElementById("family-tree-container").innerHTML =
+              familyTreeJsonToHtml(title, subtitle, trees);
+          } else {
+            const parsedJson = JSON.parse(input);
+            const title    = parsedJson.title    || "Family Tree";
+            const subtitle = parsedJson.subtitle || "";
+            document.getElementById("family-tree-container").innerHTML =
+              familyTreeJsonToHtml(title, subtitle, parsedJson);
+          }
         } catch (e) {
-          alert("Invalid JSON: " + e.message);
+          alert("Error parsing file: " + e.message);
         }
       }
       // wrap the family tree HTML and styles for export
@@ -919,6 +1265,50 @@
         a.click();
         URL.revokeObjectURL(url);
       }
+
+      // export parsed GEDCOM data from the textarea as a JSON file
+      function exportGedcomAsJson() {
+        const input = document.getElementById("family-json-input").value.trim();
+        const looksLikeGedcom = /^0\s+/.test(input);
+
+        if (!looksLikeGedcom) {
+          alert("The current input does not look like GEDCOM. Load a .ged file first.");
+          return;
+        }
+
+        try {
+          const { individuals, families } = parseGedcom(input);
+          const trees = gedcomToTree(individuals, families);
+
+          let surname = "Family";
+          if (trees.length === 1) {
+            const parts = (trees[0].name || "").split(" ");
+            surname = parts.length > 1 ? parts[parts.length - 1] : (parts[0] || "Family");
+          } else if (trees.length > 1) {
+            surname = "Multiple Families";
+          }
+
+          const exportJson = {
+            title: "The " + surname + " Family",
+            subtitle: trees.length > 1
+              ? `A genealogical record with ${trees.length} roots`
+              : "A genealogical record",
+            trees,
+          };
+
+          const pretty = JSON.stringify(exportJson, null, 2);
+          const blob = new Blob([pretty], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "parsed_family_tree.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          alert("Error parsing GEDCOM for JSON export: " + e.message);
+        }
+      }
+
       // open the family tree in a new tab
       function openHTMLInNewTab() {
         const wrappedHtml = getWrappedHtmlForExport();
@@ -939,3 +1329,4 @@
     </script>
   </body>
 </html>
+
