@@ -116,6 +116,12 @@
         color: var(--muted);
       }
 
+      .note-modal-close:focus-visible {
+        outline: 2px solid var(--royal-blue);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+
       #drop-zone {
         border: 1.5px dashed var(--color-border-secondary);
         /* border-radius:12px; */
@@ -627,6 +633,12 @@
         font-style: italic;
       }
 
+      .person-note:focus-visible {
+        outline: 2px solid var(--royal-blue);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+
       .person-marriage-branch {
         margin-top: 3px;
         padding: 1px 6px;
@@ -780,7 +792,7 @@
         if (person.note) {
           const escaped = person.note.replace(/`/g, "\\`");
           const clampedNote = person.note.length > 100 ? person.note.slice(0, 100) + "..." : person.note;
-          return `<span class="person-note" style="cursor: pointer; font-size: 0.7rem;" onclick="showNoteModal(\`${escaped}\`, this)">[Note] ${clampedNote}</span>`;
+          return `<span class="person-note" role="button" tabindex="0" aria-haspopup="dialog" style="cursor: pointer; font-size: 0.7rem;" onclick="showNoteModal(\`${escaped}\`, this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showNoteModal(\`${escaped}\`, this); }">[Note] ${clampedNote}</span>`;
         }
         return "";
       }
@@ -863,14 +875,14 @@
         return (
           `
             <div class="family-tree">
-              <div id="note-modal" onclick="closeNoteModal()">
-                <div class="note-modal-inner" onclick="event.stopPropagation()">
-                  <span class="note-modal-close" onclick="closeNoteModal()">×</span>
+              <div id="note-modal" aria-hidden="true" onclick="closeNoteModal()">
+                <div class="note-modal-inner" role="dialog" aria-modal="true" aria-label="Person note" tabindex="-1" onclick="event.stopPropagation()">
+                  <span class="note-modal-close" role="button" tabindex="0" aria-label="Close note modal" onclick="closeNoteModal()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); closeNoteModal(); }">×</span>
                   <div class="note-modal-content">
                     <div class="person-note" id="note-modal-content" style="font-size: 1rem; white-space: pre-wrap;"></div>
                   </div>
                   <div class="note-modal-close-mobile">
-                    <button onclick="closeNoteModal()">Close</button>
+                    <button aria-label="Close note modal" onclick="closeNoteModal()">Close</button>
                   </div>
                 </div>
               </div>
@@ -1312,11 +1324,11 @@
     </script>
   </head>
   <body>
-    <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div id="drop-zone" role="button" tabindex="0" aria-controls="file-input" aria-describedby="drop-zone-help" onclick="document.getElementById('file-input').click()">
       <i class="ti ti-file-upload" aria-hidden="true"></i>
       <strong>Drop your family file here</strong>
-      <p>or click to browse — JSON or GEDCOM (.ged) format</p>
-      <input type="file" id="file-input" accept=".json,.ged,.gedcom,.txt,text/plain" />
+      <p id="drop-zone-help">or click to browse — JSON or GEDCOM (.ged) format</p>
+      <input type="file" id="file-input" aria-label="Choose a family file" accept=".json,.ged,.gedcom,.txt,text/plain" />
     </div>
 
     <div id="json-input">
@@ -1324,6 +1336,7 @@
       <!-- multiline text input -->
       <textarea
         id="family-json-input"
+        aria-label="Family tree input in JSON or GEDCOM format"
         style="width: 100%; height: 500px"
       ></textarea>
     </div>
@@ -1353,6 +1366,16 @@
       // handle file drag and drop for the drop zone
       const dropZone = document.getElementById("drop-zone");
       const fileInput = document.getElementById("file-input");
+      let lastNoteModalTrigger = null;
+      let noteModalFocusTrapHandler = null;
+
+      dropZone.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
       dropZone.addEventListener("dragover", (e) => {
         e.preventDefault();
         dropZone.classList.add("drag-over");
@@ -1521,18 +1544,72 @@
     <div id="family-tree-container"></div>
     <script>
 
+      function enableNoteModalFocusTrap(modal) {
+        if (noteModalFocusTrapHandler) return;
+        noteModalFocusTrapHandler = (event) => {
+          if (event.key !== "Tab") return;
+
+          const modalInner = modal.querySelector(".note-modal-inner");
+          if (!modalInner) return;
+
+          const focusableNodes = modalInner.querySelectorAll(
+            'a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          );
+          const focusable = Array.from(focusableNodes).filter((el) =>
+            el.offsetParent !== null,
+          );
+
+          if (focusable.length === 0) {
+            event.preventDefault();
+            modalInner.focus();
+            return;
+          }
+
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        };
+
+        document.addEventListener("keydown", noteModalFocusTrapHandler);
+      }
+
+      function disableNoteModalFocusTrap() {
+        if (!noteModalFocusTrapHandler) return;
+        document.removeEventListener("keydown", noteModalFocusTrapHandler);
+        noteModalFocusTrapHandler = null;
+      }
+
       function showNoteModal(text, triggerEl) {
         const modal = document.getElementById("note-modal");
         if (!modal) return;
+        lastNoteModalTrigger = triggerEl || null;
         document.getElementById("note-modal-content").textContent = text;
+        modal.setAttribute("aria-hidden", "false");
         modal.classList.add("open");
         document.body.classList.add("modal-open");
+        enableNoteModalFocusTrap(modal);
+        const closeButton = modal.querySelector(".note-modal-close");
+        if (closeButton) {
+          closeButton.focus();
+        }
       }
       function closeNoteModal() {
         const modal = document.getElementById("note-modal");
         if (!modal) return;
+        disableNoteModalFocusTrap();
+        modal.setAttribute("aria-hidden", "true");
         modal.classList.remove("open");
         document.body.classList.remove("modal-open");
+        if (lastNoteModalTrigger && lastNoteModalTrigger.isConnected) {
+          lastNoteModalTrigger.focus();
+        }
       }
 
       document.addEventListener("DOMContentLoaded", () => {
