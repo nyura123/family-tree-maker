@@ -43,7 +43,7 @@
         display: block;
       }
 
-      #note-modal-inner {
+      .note-modal-inner {
         background: var(--card-bg);
         border: 1px solid var(--gold-lt);
         border-radius: 10px;
@@ -51,12 +51,24 @@
         position: fixed;
         min-height: 20vh;
         max-height: 90vh;
-        overflow-y: scroll;
+        /* let child scroll */
+        overflow: hidden;
         padding: 2rem;
+        display: flex;
+        flex-direction: column;
 
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+      }
+
+      .note-modal-content {
+        padding-top: 10px;
+        padding-bottom: 10px;
+        min-height: 0;
+        flex: 1 1 auto;
+        overflow-y: scroll;
+        overflow-x: scroll;
       }
 
       .note-modal-close-mobile {
@@ -68,7 +80,7 @@
           background: rgba(0, 0, 0, 0.2);
         }
 
-        #note-modal-inner {
+        .note-modal-inner {
           top: 0;
           left: 0;
           right: 0;
@@ -86,10 +98,8 @@
           justify-content: center;
         }
 
-        #note-modal-close {
-          top: 8px;
-          right: 12px;
-          font-size: 1.7rem;
+        .note-modal-close {
+          display: none;
         }
 
         .note-modal-close-mobile {
@@ -97,7 +107,7 @@
         }
       }
 
-      #note-modal-close {
+      .note-modal-close {
         position: absolute;
         top: 10px;
         right: 14px;
@@ -854,9 +864,11 @@
           `
             <div class="family-tree">
               <div id="note-modal" onclick="closeNoteModal()">
-                <div id="note-modal-inner" onclick="event.stopPropagation()">
-                  <span id="note-modal-close" onclick="closeNoteModal()">×</span>
-                  <div class="person-note" id="note-modal-content" style="font-size: 1rem; white-space: pre-wrap;"></div>
+                <div class="note-modal-inner" onclick="event.stopPropagation()">
+                  <span class="note-modal-close" onclick="closeNoteModal()">×</span>
+                  <div class="note-modal-content">
+                    <div class="person-note" id="note-modal-content" style="font-size: 1rem; white-space: pre-wrap;"></div>
+                  </div>
                   <div class="note-modal-close-mobile">
                     <button onclick="closeNoteModal()">Close</button>
                   </div>
