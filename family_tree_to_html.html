@@ -27,6 +27,41 @@
         --royal-blue: #617ac6;
       }
 
+      #note-modal {
+        position: fixed;
+        display: none;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 9999;
+      }
+
+      #note-modal.open {
+        display: block;
+      }
+
+      #note-modal-inner {
+        background: var(--card-bg);
+        border: 1px solid var(--gold-lt);
+        border-radius: 10px;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+        position: fixed;
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 2rem;
+      }
+
+      #note-modal-close {
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: var(--muted);
+      }
+
       #drop-zone {
         border: 1.5px dashed var(--color-border-secondary);
         /* border-radius:12px; */
@@ -526,6 +561,13 @@
         letter-spacing: 0.02em;
       }
 
+      .person-note {
+        margin-top: 4px;
+        font-size: 0.7rem;
+        color: var(--rust);
+        font-style: italic;
+      }
+
       .person-marriage-branch {
         margin-top: 3px;
         padding: 1px 6px;
@@ -642,6 +684,7 @@
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
         if (person.marriageLabel) coupleHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
         if (person.dates) coupleHtml += `<div class="person-dates">${person.dates}</div>`;
+        coupleHtml += renderPersonNote(person);
         coupleHtml += `</div>`; // close person-info div
         coupleHtml += `</div>`; // close person div
         coupleHtml += `</div>`; // close spouse-left div
@@ -651,6 +694,7 @@
         coupleHtml += `<div class="photo " style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div>`;
         if (person.spouse.dates) coupleHtml += `<div class="person-dates">${person.spouse.dates}</div>`;
+        coupleHtml += renderPersonNote(person.spouse);
         coupleHtml += `</div>`; // close person-info div
         coupleHtml += `</div>`; // close person div
         coupleHtml += `</div>`; // close spouse-right div
@@ -668,9 +712,18 @@
           personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
           if (person.marriageLabel) personHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
           if (person.dates) personHtml += `<div class="person-dates">${person.dates}</div>`;
+          personHtml += renderPersonNote(person);
           personHtml += `</div></div>`;
         }
         return personHtml;
+      }
+      function renderPersonNote(person) {
+        if (person.note) {
+          const escaped = person.note.replace(/`/g, "\\`");
+          const clampedNote = person.note.length > 100 ? person.note.slice(0, 100) + "..." : person.note;
+          return `<span class="person-note" style="cursor: pointer; font-size: 0.7rem;" onclick="showNoteModal(\`${escaped}\`, this)">[Note] ${clampedNote}</span>`;
+        }
+        return "";
       }
       function renderNode(
         node,
@@ -1395,9 +1448,46 @@
         }
       }
     </script>
+    <div id="note-modal" onclick="closeNoteModal()">
+      <div id="note-modal-inner" onclick="event.stopPropagation()">
+        <span id="note-modal-close" onclick="closeNoteModal()">×</span>
+        <div class="person-note" id="note-modal-content" style="font-size: 1rem; white-space: pre-wrap;"></div>
+      </div>
+    </div>
     <div id="family-tree-container"></div>
     <script>
       // on page load
+      function showNoteModal(text, triggerEl) {
+        document.getElementById("note-modal-content").textContent = text;
+        const inner = document.getElementById("note-modal-inner");
+        const cardWidth = Math.min(560, window.innerWidth - 20);
+        inner.style.width = cardWidth + "px";
+        // horizontal: align with trigger, clamped to viewport
+        const rect = triggerEl.getBoundingClientRect();
+        let left = rect.left;
+        if (left + cardWidth > window.innerWidth - 10) left = window.innerWidth - cardWidth - 10;
+        left = Math.max(10, left);
+        inner.style.left = left + "px";
+        // vertical: prefer above the trigger, fall back to below
+        // const spaceAbove = rect.top;
+        // const spaceBelow = window.innerHeight - rect.bottom;
+        // if (spaceAbove >= 150 || spaceAbove >= spaceBelow) {
+        //   inner.style.bottom = (window.innerHeight - rect.top + 6) + "px";
+        //   inner.style.top = "";
+        // } else {
+        //   inner.style.top = (rect.bottom + 6) + "px";
+        //   inner.style.bottom = "";
+        // }
+
+        // for now just display below [note] trigger element.
+          inner.style.top = (rect.bottom + 6) + "px";
+          inner.style.bottom = "";
+        document.getElementById("note-modal").classList.add("open");
+      }
+      function closeNoteModal() {
+        document.getElementById("note-modal").classList.remove("open");
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         // parse source from URL query parameter if present, otherwise use default familyJson
         const urlParams = new URLSearchParams(window.location.search);
