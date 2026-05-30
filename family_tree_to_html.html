@@ -633,11 +633,11 @@
         font-style: italic;
       }
 
-      .person-note:focus-visible {
+      /* .person-note:focus-visible {
         outline: 2px solid var(--royal-blue);
         outline-offset: 2px;
         border-radius: 2px;
-      }
+      } */
 
       .person-marriage-branch {
         margin-top: 3px;
@@ -790,9 +790,9 @@
       }
       function renderPersonNote(person) {
         if (person.note) {
-          const escaped = person.note.replace(/`/g, "\\`");
-          const clampedNote = person.note.length > 100 ? person.note.slice(0, 100) + "..." : person.note;
-          return `<span class="person-note" role="button" tabindex="0" aria-haspopup="dialog" style="cursor: pointer; font-size: 0.7rem;" onclick="showNoteModal(\`${escaped}\`, this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showNoteModal(\`${escaped}\`, this); }">[Note] ${clampedNote}</span>`;
+          const noteId = person.noteId || "";
+          const clampedNote = person.note.length > 10 ? person.note.slice(0, 10) + "..." : person.note;
+          return `<span class="person-note" role="button" tabindex="0" aria-haspopup="dialog" data-note="${noteId}" style="cursor: pointer; font-size: 0.7rem;" onclick="showNoteModal(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }">[Note] ${clampedNote}</span>`;
         }
         return "";
       }
@@ -1368,6 +1368,59 @@
       const fileInput = document.getElementById("file-input");
       let lastNoteModalTrigger = null;
       let noteModalFocusTrapHandler = null;
+      let notesById = {};
+      let nextNoteId = 1;
+
+      function resetNotesStore() {
+        notesById = {};
+        nextNoteId = 1;
+      }
+
+      function registerNoteText(noteText) {
+        if (!noteText) return "";
+        const noteId = `note-${nextNoteId++}`;
+        notesById[noteId] = noteText;
+        return noteId;
+      }
+
+      function populateNotesStore(data) {
+        resetNotesStore();
+
+        function walkPerson(person) {
+          if (!person || typeof person !== "object") return;
+
+          if (person.note) {
+            person.noteId = registerNoteText(person.note);
+          } else {
+            delete person.noteId;
+          }
+
+          if (person.spouse && typeof person.spouse === "object") {
+            if (person.spouse.note) {
+              person.spouse.noteId = registerNoteText(person.spouse.note);
+            } else {
+              delete person.spouse.noteId;
+            }
+          }
+
+          if (Array.isArray(person.children)) {
+            for (const child of person.children) {
+              walkPerson(child);
+            }
+          }
+        }
+
+        if (Array.isArray(data)) {
+          for (const tree of data) {
+            walkPerson(tree);
+          }
+          return;
+        }
+
+        if (data && typeof data === "object") {
+          walkPerson(data);
+        }
+      }
 
       dropZone.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -1422,6 +1475,7 @@
           if (looksLikeGedcom) {
             const { individuals, families } = parseGedcom(input);
             const trees = gedcomToTree(individuals, families);
+            populateNotesStore(trees);
             // Compose a title and subtitle for GEDCOM with multiple roots
             let surname = "Family";
             if (trees.length === 1) {
@@ -1436,6 +1490,7 @@
               familyTreeJsonToHtml(title, subtitle, trees);
           } else {
             const parsedJson = JSON.parse(input);
+            populateNotesStore(parsedJson);
             const title    = parsedJson.title    || "Family Tree";
             const subtitle = parsedJson.subtitle || "";
             document.getElementById("family-tree-container").innerHTML =
@@ -1586,9 +1641,11 @@
         noteModalFocusTrapHandler = null;
       }
 
-      function showNoteModal(text, triggerEl) {
+      function showNoteModal(triggerEl) {
         const modal = document.getElementById("note-modal");
         if (!modal) return;
+        const noteId = triggerEl ? triggerEl.getAttribute("data-note") : "";
+        const text = noteId ? (notesById[noteId] || "") : "";
         lastNoteModalTrigger = triggerEl || null;
         document.getElementById("note-modal-content").textContent = text;
         modal.setAttribute("aria-hidden", "false");
