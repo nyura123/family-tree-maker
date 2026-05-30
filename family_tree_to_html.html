@@ -28,7 +28,7 @@
       }
 
       #note-modal {
-        position: absolute;
+        position: fixed;
         display: none;
         top: 0;
         left: 0;
@@ -47,10 +47,15 @@
         border: 1px solid var(--gold-lt);
         border-radius: 10px;
         box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
-        position: absolute;
-        max-height: 60vh;
+        position: fixed;
+        min-height: 20vh;
+        max-height: 90vh;
         overflow-y: auto;
         padding: 2rem;
+
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
       }
 
       @media (max-width: 600px) {
@@ -59,11 +64,12 @@
         }
 
         #note-modal-inner {
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          max-height: none !important;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          transform: none;
+          max-height: none;
           border-radius: 0;
           box-shadow: none;
           border: none;
@@ -158,6 +164,10 @@
               /* reverse */
         /* radial-gradient(ellipse at 20% 10%, #d4b89644 0%, transparent 50%), */
         /* radial-gradient(ellipse at 80% 90%, #e8d9bf44 0%, transparent 50%);  */
+      }
+
+      body.modal-open {
+        overflow: hidden;
       }
 
       header {
@@ -1481,41 +1491,28 @@
     </script>
     <div id="family-tree-container"></div>
     <script>
-      // on page load
-      function clamp(value, min, max) {
-        return Math.min(Math.max(value, min), max);
-      }
 
       function showNoteModal(text, triggerEl) {
         const modal = document.getElementById("note-modal");
-        const inner = document.getElementById("note-modal-inner");
+        if (!modal) return;
         document.getElementById("note-modal-content").textContent = text;
         modal.classList.add("open");
-        const modalRect = modal.getBoundingClientRect();
-        const triggerRect = triggerEl.getBoundingClientRect();
-        const cardWidth = Math.min(560, Math.max(280, modal.clientWidth - 20));
-        inner.style.width = cardWidth + "px";
-
-        // Convert viewport coordinates to note-modal local coordinates.
-        let left = triggerRect.left - modalRect.left;
-        if (left + cardWidth > modal.clientWidth - 10) {
-          left = modal.clientWidth - cardWidth - 10;
-        }
-        left = Math.max(10, left);
-        inner.style.left = left + "px";
-
-        // Place modal below trigger by default and clamp within container.
-        const minTop = 10;
-        const preferredTop = triggerRect.bottom - modalRect.top + 6;
-        const maxTop = Math.max(minTop, modal.clientHeight - inner.offsetHeight - minTop);
-        const top = clamp(preferredTop, minTop, maxTop);
-        inner.style.top = top + "px";
+        document.body.classList.add("modal-open");
       }
       function closeNoteModal() {
-        document.getElementById("note-modal").classList.remove("open");
+        const modal = document.getElementById("note-modal");
+        if (!modal) return;
+        modal.classList.remove("open");
+        document.body.classList.remove("modal-open");
       }
 
       document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            closeNoteModal();
+          }
+        });
+
         // parse source from URL query parameter if present, otherwise use default familyJson
         const urlParams = new URLSearchParams(window.location.search);
         const sourceParam = urlParams.get("source");
