@@ -26,6 +26,8 @@
         --border-radius: 7px;
         --family-node-height: 150px;
         --royal-blue: #617ac6;
+        --color-border: #c4a87a;
+        --color-border-secondary: #e8d5a3;
       }
 
       #note-modal {
@@ -453,6 +455,16 @@
         /* border-bottom: var(--line-width) solid var(--light-green); */
       }
 
+      .more-info-available .photo::before {
+        content: "";
+        position: absolute;
+        inset: 1px;
+        border-radius: 50%;
+        border: 3px solid var(--color-border);
+        pointer-events: default;
+        cursor: pointer;
+      }
+
       .photo {
         /* anchor for vertical lines ::after */
         position: relative;
@@ -750,7 +762,7 @@
         let coupleHtml = `<div class="couple gen-${generation}">`;
         // person.spouse exists
         coupleHtml += `<div class="spouse-left">`;
-        coupleHtml += `<div class="person" style="align-items: flex-end">`;
+        coupleHtml += `<div class="person ${renderNoteClass(person.noteId)}" style="align-items: flex-end;" ${renderNoteOnClickAttributes(person.noteId)}> `;
         coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
         if (person.marriageLabel) coupleHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
@@ -761,7 +773,7 @@
         coupleHtml += `</div>`; // close spouse-left div
         coupleHtml += `<div class="couple-heart">♥</div>`;
         coupleHtml += `<div class="spouse-right">`;
-        coupleHtml += `<div class="person" style="align-items: flex-start">`;
+        coupleHtml += `<div class="person ${renderNoteClass(person.spouse.noteId)}" style="align-items: flex-start;" ${renderNoteOnClickAttributes(person.spouse.noteId)}>`;
         coupleHtml += `<div class="photo " style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div>`;
         if (person.spouse.dates) coupleHtml += `<div class="person-dates">${person.spouse.dates}</div>`;
@@ -778,7 +790,7 @@
         if (person.spouse) {
           personHtml += renderCouple(person, generation);
         } else {
-          personHtml += `<div class="person gen-${generation}">`;
+          personHtml += `<div class="person gen-${generation} ${renderNoteClass(person.noteId)}" ${renderNoteOnClickAttributes(person.noteId)}>`;
           personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
           personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
           if (person.marriageLabel) personHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
@@ -792,10 +804,18 @@
         if (person.note) {
           const noteId = person.noteId || "";
           const clampedNote = person.note.length > 10 ? person.note.slice(0, 10) + "..." : person.note;
-          return `<span class="person-note" role="button" tabindex="0" aria-haspopup="dialog" data-note="${noteId}" style="cursor: pointer; font-size: 0.7rem;" onclick="showNoteModal(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }">[Note] ${clampedNote}</span>`;
+          return `<span class="person-note">[Note] ${clampedNote}</span>`;
         }
         return "";
       }
+      function renderNoteOnClickAttributes(noteId) {
+        if (!noteId) return "";
+        return `role="button" tabindex="0" aria-haspopup="dialog" onclick="showNoteModal('${noteId}')" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }"`;
+      }
+      function renderNoteClass(noteId) {
+        return noteId ? "more-info-available" : "";
+      }
+
       function renderNode(
         node,
         generation = 1,
@@ -1366,7 +1386,7 @@
       // handle file drag and drop for the drop zone
       const dropZone = document.getElementById("drop-zone");
       const fileInput = document.getElementById("file-input");
-      let lastNoteModalTrigger = null;
+      // let lastNoteModalTrigger = null;
       let noteModalFocusTrapHandler = null;
       let notesById = {};
       let nextNoteId = 1;
@@ -1641,12 +1661,10 @@
         noteModalFocusTrapHandler = null;
       }
 
-      function showNoteModal(triggerEl) {
+      function showNoteModal(noteId) {
         const modal = document.getElementById("note-modal");
         if (!modal) return;
-        const noteId = triggerEl ? triggerEl.getAttribute("data-note") : "";
         const text = noteId ? (notesById[noteId] || "") : "";
-        lastNoteModalTrigger = triggerEl || null;
         document.getElementById("note-modal-content").textContent = text;
         modal.setAttribute("aria-hidden", "false");
         modal.classList.add("open");
@@ -1664,9 +1682,6 @@
         modal.setAttribute("aria-hidden", "true");
         modal.classList.remove("open");
         document.body.classList.remove("modal-open");
-        if (lastNoteModalTrigger && lastNoteModalTrigger.isConnected) {
-          lastNoteModalTrigger.focus();
-        }
       }
 
       document.addEventListener("DOMContentLoaded", () => {
