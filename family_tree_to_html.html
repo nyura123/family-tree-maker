@@ -1,6 +1,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Family Tree</title>
     <style>
       :root {
@@ -74,6 +75,11 @@
           box-shadow: none;
           border: none;
           padding: 1.25rem;
+
+          /* center content */
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
         }
 
         #note-modal-close {
@@ -1362,7 +1368,7 @@
       }
 
       // parse the textarea content (JSON or GEDCOM) and update the family tree
-      function updateFamilyTree(forceGedcom) {
+      function updateFamilyTree(forceGedcom, title='') {
         const input = document.getElementById("family-json-input").value.trim();
         // Detect GEDCOM by explicit flag or by content starting with a level-0 line
         const looksLikeGedcom = forceGedcom || /^0\s+/.test(input);
@@ -1378,7 +1384,7 @@
             } else if (trees.length > 1) {
               surname = "Multiple Families";
             }
-            const title    = "The " + surname + " Family";
+            title    = title || "The " + surname + " Family";
             const subtitle = trees.length > 1 ? `A genealogical record with ${trees.length} roots` : "A genealogical record";
             document.getElementById("family-tree-container").innerHTML =
               familyTreeJsonToHtml(title, subtitle, trees);
@@ -1483,7 +1489,7 @@
           }
           const text = await response.text();
           document.getElementById("family-json-input").value = text;
-          updateFamilyTree(true);
+          updateFamilyTree(true, 'The British Royal Family');
         } catch (error) {
           alert("Error loading GEDCOM file: " + error.message);
         }
