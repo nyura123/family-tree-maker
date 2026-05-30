@@ -24,6 +24,7 @@
         --spouse-lighten-pcnt: 40%;
         --border-radius: 7px;
         --family-node-height: 150px;
+        --royal-blue: #617ac6;
       }
 
       #drop-zone {
@@ -68,6 +69,10 @@
         border: none;
         border-radius: 5px;
         cursor: pointer;
+      }
+
+      .royal-blue {
+        background-color: var(--royal-blue);
       }
 
       body {
@@ -169,6 +174,11 @@
         align-items: flex-start;
         /* gap: 10px; */
       }
+
+      /* alternate background colors for siblings children */
+      /* .siblings > div:nth-child(odd) {
+        background-color: color-mix(in srgb, var(--cream), white 40%); */
+      /* } */
 
       /* vertical line above child - doesn't work so commented out. see family-node ::after instead*/
       /* the rendered ::after is invisible, maybe z-index issues */
@@ -1185,9 +1195,13 @@
 
     <button onclick="updateFamilyTree()">Update Family Tree</button>
     <button onclick="exportAsHtml()">Export as HTML</button>
-    <button onclick="exportGedcomAsJson()">Export GEDCOM as JSON</button>
+    <!-- <button onclick="exportGedcomAsJson()">Export GEDCOM as JSON</button> -->
     <button onclick="openHTMLInNewTab()">Open in New Tab</button>
-    <a href="https://chronoplexsoftware.com/myfamilytree/samples/The English and British Kings and Queens.ged" target="_blank">Load British Royal GEDCOM</a>
+    <br><br>
+    <br><br>
+    <button class="royal-blue" onclick="loadEnglishRoyalFamilyGedcom()">Load English Royal Family GEDCOM</button>
+    <br><br>
+    Source: <a href="https://chronoplexsoftware.com/myfamilytree/samples/index.htm" target="_blank">Chronoplex Software Samples</a>
     <script>
       // handle file drag and drop for the drop zone
       const dropZone = document.getElementById("drop-zone");
@@ -1340,6 +1354,21 @@
         const blob = new Blob([wrappedHtml], { type: "text/html" });
         const url = URL.createObjectURL(blob);
         window.open(url, "_blank");
+      }
+
+      async function loadEnglishRoyalFamilyGedcom() {
+        const gedcomUrl = "https://family-tree-maker.wisp.place/english_royals.ged";
+        try {
+          const response = await fetch(gedcomUrl);
+          if (!response.ok) {
+            throw new Error("Network response was not ok: " + [response.statusText, response.status].filter(Boolean).join(" "));
+          }
+          const text = await response.text();
+          document.getElementById("family-json-input").value = text;
+          updateFamilyTree(true);
+        } catch (error) {
+          alert("Error loading GEDCOM file: " + error.message);
+        }
       }
     </script>
     <div id="family-tree-container"></div>
