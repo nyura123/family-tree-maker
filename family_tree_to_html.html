@@ -516,6 +516,18 @@
         display: inline-block;
       }
 
+      .couple-family-skipped {
+        margin-top: 3px;
+        padding: 1px 6px;
+        border: 1px solid var(--gold-lt);
+        border-radius: 3px;
+        font-size: 0.58rem;
+        color: var(--brown);
+        background: color-mix(in srgb, var(--gold-lt), white 65%);
+        letter-spacing: 0.03em;
+        display: inline-block;
+      }
+
       /* ── Animations ── */
       @keyframes fadeUp {
         from {
@@ -608,19 +620,20 @@
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
         if (person.marriageLabel) coupleHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
         if (person.dates) coupleHtml += `<div class="person-dates">${person.dates}</div>`;
-        coupleHtml += `</div>`;
-        coupleHtml += `</div>`;
-        coupleHtml += `</div>`;
+        coupleHtml += `</div>`; // close person-info div
+        coupleHtml += `</div>`; // close person div
+        coupleHtml += `</div>`; // close spouse-left div
         coupleHtml += `<div class="couple-heart">♥</div>`;
         coupleHtml += `<div class="spouse-right">`;
         coupleHtml += `<div class="person" style="align-items: flex-start">`;
         coupleHtml += `<div class="photo " style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div>`;
         if (person.spouse.dates) coupleHtml += `<div class="person-dates">${person.spouse.dates}</div>`;
-        coupleHtml += `</div>`;
-        coupleHtml += `</div>`;
-        coupleHtml += `</div>`;
-        coupleHtml += `</div>`;
+        coupleHtml += `</div>`; // close person-info div
+        coupleHtml += `</div>`; // close person div
+        coupleHtml += `</div>`; // close spouse-right div
+        coupleHtml += `</div>`; // close couple div
+        if (person.familySkipped) coupleHtml += `<div class="couple-family-skipped">Family already rendered in another tree</div>`;
         return coupleHtml;
       }
       function renderPerson(person, generation) {
@@ -1000,6 +1013,8 @@
       }
 
       function gedcomToTree(individuals, families) {
+        const familyIds = new Set();
+
         function buildNodeVariants(personId, pathVisited = new Set()) {
           if (!personId) return [];
           const person = individuals[personId];
@@ -1021,6 +1036,7 @@
           const variants = [];
           for (let idx = 0; idx < famIds.length; idx++) {
             const famId = famIds[idx];
+
             const visitKey = `${personId}|${famId}`;
             if (pathVisited.has(visitKey)) {
               // console.log("already visited person-family combination, skipping to avoid circular loop:", visitKey, person.name);
@@ -1032,6 +1048,7 @@
             if (famIds.length > 1) {
               node.marriageLabel = `Marriage ${idx + 1} of ${famIds.length}`;
             }
+
 
             const spouseId = fam.husbId === personId ? fam.wifeId : fam.husbId;
             if (spouseId) {
@@ -1046,21 +1063,31 @@
               }
             }
 
-            const nextVisited = new Set(pathVisited);
-            nextVisited.add(visitKey);
-            // console.log('visiting person-family combination:', visitKey, person.name, "spouseId:", spouseId, "spouse name:", node.spouse ? node.spouse.name : "no spouse");
-            // if (spouseId) {
-            //   pathVisited.add(`${spouseId}|${famId}`);
-            //   console.log('also marking spouse-family combination as visited to avoid duplicate variant:', `${spouseId}|${famId}`);
-            // }
+            if (familyIds.has(famId)) {
+              // console.log("already rendered this family in another root, skipping to avoid duplicate family trees:", famId, person.name);
+               // mark that we skipped rendering this family to avoid duplicate trees,
+               // so that we can optionally indicate this in the UI if needed
+              node.familySkipped = true;
+              variants.push(node);
+            } else {
+              familyIds.add(famId);
 
-            const children = [];
-            for (const childId of (fam.chilIds || [])) {
-              children.push(...buildNodeVariants(childId, nextVisited));
+              const nextVisited = new Set(pathVisited);
+              nextVisited.add(visitKey);
+              // console.log('visiting person-family combination:', visitKey, person.name, "spouseId:", spouseId, "spouse name:", node.spouse ? node.spouse.name : "no spouse");
+              // if (spouseId) {
+              //   pathVisited.add(`${spouseId}|${famId}`);
+              //   console.log('also marking spouse-family combination as visited to avoid duplicate variant:', `${spouseId}|${famId}`);
+              // }
+
+              const children = [];
+              for (const childId of (fam.chilIds || [])) {
+                children.push(...buildNodeVariants(childId, nextVisited));
+              }
+              if (children.length > 0) node.children = children;
+
+              variants.push(node);
             }
-            if (children.length > 0) node.children = children;
-
-            variants.push(node);
           }
 
           return variants.length > 0 ? variants : [baseNode];
@@ -1125,16 +1152,12 @@
         });
 
         const trees = [];
-        const rootFamilyIds = new Set();
         for (const root of roots) {
           const familyNodes = buildNodeVariants(root.id);
           for (const familyNode of familyNodes) {
-            if (familyNode.familyId) {
-              if (rootFamilyIds.has(familyNode.familyId)) {
-                // console.log("already rendered familyId, skipping duplicate tree variant:", familyNode.familyId, "node name:", familyNode.name);
+            if (familyNode.familySkipped) {
+                // don't show duplicate root families with reversed spouses
                 continue;
-              }
-              rootFamilyIds.add(familyNode.familyId);
             }
             trees.push(familyNode);
           }
