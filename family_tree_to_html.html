@@ -71,6 +71,18 @@
         cursor: pointer;
       }
 
+      .button-small {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+      }
+
+      .button-row {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
       .royal-blue {
         background-color: var(--royal-blue);
       }
@@ -1197,11 +1209,23 @@
     <button onclick="exportAsHtml()">Export as HTML</button>
     <!-- <button onclick="exportGedcomAsJson()">Export GEDCOM as JSON</button> -->
     <button onclick="openHTMLInNewTab()">Open in New Tab</button>
-    <br><br>
-    <br><br>
-    <button class="royal-blue" onclick="loadEnglishRoyalFamilyGedcom()">Load English Royal Family GEDCOM</button>
-    <br><br>
-    Source: <a href="https://chronoplexsoftware.com/myfamilytree/samples/index.htm" target="_blank">Chronoplex Software Samples</a>
+    <div class="button-row" style="justify-content: flex-start; gap: 12px; flex-wrap: wrap;">
+      <!-- link button to ?source=english_royals -->
+      <div>
+          <a href="?source=english_royals">
+            <button class="royal-blue button-small">Load English Royal Family GEDCOM from URL</button>
+          </a>
+        <!-- <button class="royal-blue" onclick="loadEnglishRoyalFamilyGedcom()">Load English Royal Family GEDCOM</button> -->
+        <!-- <br></br> -->
+        <div style="font-size:smaller;color:grey;margin-top:3px;">
+          Source: <a href="https://chronoplexsoftware.com/myfamilytree/samples/index.htm" target="_blank">Chronoplex Software Samples</a>
+        </div>
+      </div>
+
+      <a href="?">
+        <button class="button-small">Load sample family</button>
+      </a>
+    </div>
     <script>
       // handle file drag and drop for the drop zone
       const dropZone = document.getElementById("drop-zone");
@@ -1373,13 +1397,22 @@
     </script>
     <div id="family-tree-container"></div>
     <script>
-      // populate the textarea with the default JSON
-      document.getElementById("family-json-input").value = JSON.stringify(
-        familyJson,
-        null,
-        2,
-      );
-      updateFamilyTree();
+      // on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        // parse source from URL query parameter if present, otherwise use default familyJson
+        const urlParams = new URLSearchParams(window.location.search);
+        const sourceParam = urlParams.get("source");
+        if (sourceParam == "english_royals") {
+          console.log("Loading English Royal Family GEDCOM from URL parameter...");
+          // load the British Royal Family GEDCOM from the provided URL
+          loadEnglishRoyalFamilyGedcom();
+        } else {
+          console.log("No source parameter in URL, using default familyJson data.");
+          // populate the textarea with the default JSON
+          document.getElementById("family-json-input").value = JSON.stringify(familyJson, null, 2);
+          updateFamilyTree();
+        }
+      });
     </script>
   </body>
 </html>
