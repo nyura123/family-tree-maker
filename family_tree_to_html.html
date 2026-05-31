@@ -742,6 +742,18 @@
           box-shadow 0.2s ease;
       }
 
+      .person:focus {
+        outline: none;
+      }
+
+      .person:focus .photo,
+      .person:focus-visible .photo {
+        transform: scale(1.08);
+        box-shadow:
+          0 0 0 3px var(--royal-blue),
+          0 4px 16px rgba(0, 0, 0, 0.14);
+      }
+
       .photo {
         transition:
           transform 0.2s ease,
@@ -775,10 +787,12 @@
         return style;
       }
       function renderCouple(person, generation, isSingleOrMiddleChild) {
+          const rootAttrs = generation === 1 ? " root-family" : "";
+          const rootTabIndex = generation === 1 ? " tabindex='0'" : "";
         let coupleHtml = `<div class="couple gen-${generation}">`;
         // person.spouse exists
         coupleHtml += `<div class="spouse-left">`;
-        coupleHtml += `<div class="person ${renderMoreInfoClass(person)}" style="align-items: flex-end;" ${renderMoreInfoAttributes(person)}> `;
+        coupleHtml += `<div class="person ${rootAttrs} ${renderMoreInfoClass(person)}" style="align-items: flex-end;" ${renderMoreInfoAttributes(person)} ${rootTabIndex}> `;
         coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
         if (person.marriageLabel)
@@ -814,7 +828,9 @@
         if (person.spouse) {
           personHtml += renderCouple(person, generation);
         } else {
-          personHtml += `<div class="person gen-${generation} ${renderMoreInfoClass(person)}" ${renderMoreInfoAttributes(person)}>`;
+          const rootAttrs = generation === 1 ? " root-family" : "";
+          const rootTabIndex = generation === 1 ? " tabindex='0'" : "";
+          personHtml += `<div class="person ${rootAttrs} gen-${generation} ${renderMoreInfoClass(person)}" ${renderMoreInfoAttributes(person)} ${rootTabIndex} >`;
           personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
           personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
           if (person.marriageLabel)
@@ -1695,6 +1711,15 @@
             activeFamilyTrees,
             activeFamilyPageIndex,
           );
+        requestAnimationFrame(() => {
+          console.log('focusing root family element for page index:', activeFamilyPageIndex);
+          const rootFamilyEl = document.querySelector("#family-tree-container .person.root-family");
+          if (rootFamilyEl) {
+            console.log('found root family element, setting focus:', rootFamilyEl);
+            rootFamilyEl.focus();
+            rootFamilyEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        });
       }
 
       function prevFamilyPage() {
