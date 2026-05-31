@@ -840,7 +840,7 @@
       }
       function renderMoreInfoAttributes(person) {
         if (!person?.noteId) return "";
-        return `role="button" tabindex="0" aria-haspopup="dialog" onclick="showNoteModal('${person.noteId}', this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }"`;
+        return `role="button" tabindex="0" aria-haspopup="dialog" onclick="showNoteModal('${person.noteId}', this)" onkeydown="personOnKeyDown(event, this)"`;
       }
       function renderMoreInfoClass(person) {
         return person.noteId ? "more-info-available" : "";
@@ -1982,6 +1982,13 @@
         const closeButton = modal.querySelector(".note-modal-close");
         if (closeButton) {
           closeButton.focus();
+        }
+      }
+
+      function personOnKeyDown(event, thisEl) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          thisEl.click();
         }
       }
       function closeNoteModal() {
