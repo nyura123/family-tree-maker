@@ -1076,9 +1076,42 @@
 
       // ── GEDCOM Parser ─────────────────────────────────────────────────────
 
+      function parseNote(value, i, lines) {
+        const noteLines = value? [value] : [];
+        while (i + 1 < lines.length) {
+          const nextRaw = lines[i + 1].trim();
+          const mNext = nextRaw.match(/^(\d+)\s+(\S+)(?:\s+(.*))?$/);
+          if (!mNext) break;
+          const nextLevel = parseInt(mNext[1]);
+          const nextTag = mNext[2].toUpperCase();
+          const nextValue = (mNext[3] || "").trim();
+          // console.log("looking for CONC/CONT, found:", { nextLevel, nextTag, nextValue });
+          if (nextTag === "CONC" && (nextLevel >= 1 && nextLevel <= 2)) {
+            if (nextValue === "") {
+              // console.log("CONC with empty value, adding newline");
+              noteLines.push("\n"); // use <br> to represent newlines in HTML
+            } else {
+              noteLines.push(nextValue);
+            }
+            i++;
+          } else if (nextTag === "CONT" && (nextLevel >= 1 && nextLevel <= 2)) {
+            if (nextValue === "") {
+              // console.log("CONT with empty value, adding newline");
+              noteLines.push("\n"); // use <br> to represent newlines in HTML
+            } else {
+              noteLines.push(nextValue);
+            }
+            i++;
+          } else {
+            break;
+          }
+        }
+        return {i, note: noteLines.join(" ")};
+      }
       function parseGedcom(text) {
         const individuals = {};
         const families = {};
+        const notes = {};
         if (!text || typeof text !== "string") {
           return { individuals, families };
         }
@@ -1099,7 +1132,21 @@
 
           if (level === 0) {
             subTag = null;
-            if (tag === "INDI" && xref) {
+            if (tag === "NOTE" && xref) {
+                const noteResult = parseNote(value, i, lines);
+                i = noteResult.i;
+              // handle standalone NOTE records that aren't attached to an individual or family,
+              // by looking them up in the notes object which we populated while parsing INDI records with NOTE tag.
+              if (notes[xref]?.rec) {
+                const rec = notes[xref].rec;
+                rec.note = noteResult.note;
+              } else {
+                console.warn("NOTE record found with id:", xref, "but no individual or family record references it. Ignoring this note.");
+                // store the note text anyway, in case we find an individual or family record later that references this note id.
+                // This allows notes to be defined before the records that reference them, which is valid GEDCOM.
+                notes[xref] = { note: noteResult.note };
+              }
+            } else if (tag === "INDI" && xref) {
               rec = { type: "INDI", id: xref, famcList: [], famsList: [] };
               individuals[xref] = rec;
             } else if (tag === "FAM" && xref) {
@@ -1148,38 +1195,25 @@
             } else if ( tag === 'OCCU' && level === 1) {
               rec.occupation = value;
             } else if (tag === "NOTE" && level === 1) {
-              rec.note = value;
-              // Look ahead for CONC and CONT lines to concatenate
-              let noteLines = [value];
-              while (i + 1 < lines.length) {
-                const nextRaw = lines[i + 1].trim();
-                const mNext = nextRaw.match(/^(\d+)\s+(\S+)(?:\s+(.*))?$/);
-                if (!mNext) break;
-                const nextLevel = parseInt(mNext[1]);
-                const nextTag = mNext[2].toUpperCase();
-                const nextValue = (mNext[3] || "").trim();
-                // console.log("looking for CONC/CONT, found:", { nextLevel, nextTag, nextValue });
-                if (nextTag === "CONC" && nextLevel === 2) {
-                  if (nextValue === "") {
-                    // console.log("CONC with empty value, adding newline");
-                    noteLines.push("\n"); // use <br> to represent newlines in HTML
-                  } else {
-                    noteLines.push(nextValue);
-                  }
-                  i++;
-                } else if (nextTag === "CONT" && nextLevel === 2) {
-                  if (nextValue === "") {
-                    // console.log("CONT with empty value, adding newline");
-                    noteLines.push("\n"); // use <br> to represent newlines in HTML
-                  } else {
-                    noteLines.push(nextValue);
-                  }
-                  i++;
+              // if note looks like an id, store it as noteId and look up the actual note text later
+              if (/^@[^@]+@$/.test(value)) {
+                const noteId = value.replace(/@/g, "");
+                if (notes[noteId]?.note) {
+                  // if we already have the note text for this note id (for example from a standalone NOTE record that we parsed earlier),
+                  // attach it to this record now
+                  rec.note = notes[noteId].note;
                 } else {
-                  break;
+                  // otherwise, store the noteId on this record, and when we later encounter a standalone NOTE record with this id,
+                  // we'll attach the note text to this record then
+                  // console.warn("record with NOTE tag found referencing note id:", noteId, "but we haven't parsed a standalone NOTE record with this id yet. Storing the note id on this record and will look up the note text later when we parse a standalone NOTE record with this id.");
+                  notes[noteId] = { rec };
                 }
+              } else {
+                // Look ahead for CONC and CONT lines to concatenate
+                const noteResult = parseNote(value, i, lines);
+                i = noteResult.i;
+                rec.note = noteResult.note;
               }
-              rec.note = noteLines.join("");
             }
           } else if (rec.type === "FAM") {
             if (tag === "HUSB" && level === 1) {
