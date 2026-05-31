@@ -906,22 +906,23 @@
                 </div>
                 `;
       }
-      function familyTreeJsonToHtml(title, subtitle, familyTrees) {
+      function familyTreeJsonToHtml(title, subtitle, familyTrees, pageIndex = 0) {
         // familyTrees can be a single object or an array
         const trees = Array.isArray(familyTrees) ? familyTrees : [familyTrees];
-        let allTreesHtml = "";
-        for (const tree of trees) {
-          allTreesHtml += renderNode(tree);
+        const safeIndex = Math.min(Math.max(pageIndex, 0), Math.max(trees.length - 1, 0));
+        const activeTree = trees[safeIndex];
+        const activeTreeHtml = activeTree ? renderNode(activeTree) : "";
 
-          // render a pretty separator between multiple family trees, except after the last one
-          if (trees.length > 1 && tree !== trees[trees.length - 1]) {
-            allTreesHtml += `
-              <div style="text-align: center; margin: 2rem 0; color: var(--muted);">
-                <span style="font-size: 1.5rem;">✦ Next Family ✦</span>
-              </div>
-            `;
-          }
-        }
+        const pagerHtml = trees.length > 1
+          ? `
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:0.75rem 0 1.25rem;">
+              <button class="button-small" ${safeIndex === 0 ? "disabled" : ""} onclick="prevFamilyPage()">Previous Family</button>
+              <span style="color:var(--muted);font-size:0.95rem;">Family ${safeIndex + 1} of ${trees.length}</span>
+              <button class="button-small" ${safeIndex === trees.length - 1 ? "disabled" : ""} onclick="nextFamilyPage()">Next Family</button>
+            </div>
+          `
+          : "";
+
         return (
           `
             <div class="family-tree">
@@ -941,8 +942,9 @@
                 <h1 class="family-name">${title}</h1>
                 <p class="family-sub">${subtitle}</p>
                 <span class="ornament">✦</span>
-              </header>` +
-          allTreesHtml +
+              </header>
+              ${pagerHtml}` +
+          activeTreeHtml +
           `</div>
           `
         );
@@ -1677,6 +1679,39 @@
       let noteModalFocusTrapHandler = null;
       let notesById = {};
       let nextNoteId = 1;
+      let activeFamilyTrees = [];
+      let activeFamilyTitle = "Family Tree";
+      let activeFamilySubtitle = "";
+      let activeFamilyPageIndex = 0;
+
+      function setFamilyPage(pageIndex) {
+        if (!activeFamilyTrees.length) return;
+        const maxIndex = activeFamilyTrees.length - 1;
+        activeFamilyPageIndex = Math.min(Math.max(pageIndex, 0), maxIndex);
+        document.getElementById("family-tree-container").innerHTML =
+          familyTreeJsonToHtml(
+            activeFamilyTitle,
+            activeFamilySubtitle,
+            activeFamilyTrees,
+            activeFamilyPageIndex,
+          );
+      }
+
+      function prevFamilyPage() {
+        setFamilyPage(activeFamilyPageIndex - 1);
+      }
+
+      function nextFamilyPage() {
+        setFamilyPage(activeFamilyPageIndex + 1);
+      }
+
+      function initializeFamilyPaging(title, subtitle, familyTrees) {
+        activeFamilyTitle = title || "Family Tree";
+        activeFamilySubtitle = subtitle || "";
+        activeFamilyTrees = Array.isArray(familyTrees) ? familyTrees : [familyTrees];
+        activeFamilyPageIndex = 0;
+        setFamilyPage(0);
+      }
 
       function resetNotesStore() {
         notesById = {};
@@ -1799,16 +1834,14 @@
             //   trees.length > 1
             //     ? `A genealogical record with ${trees.length} roots`
             //     : "A genealogical record";
-            subtitle = '';
-            document.getElementById("family-tree-container").innerHTML =
-              familyTreeJsonToHtml(title, subtitle, trees);
+            const subtitle = "";
+            initializeFamilyPaging(title, subtitle, trees);
           } else {
             const parsedJson = JSON.parse(input);
             populateNotesStore(parsedJson);
             const title = parsedJson.title || "Family Tree";
             const subtitle = parsedJson.subtitle || "";
-            document.getElementById("family-tree-container").innerHTML =
-              familyTreeJsonToHtml(title, subtitle, parsedJson);
+            initializeFamilyPaging(title, subtitle, parsedJson);
           }
         } catch (e) {
           alert("Error parsing file: " + e.message);
