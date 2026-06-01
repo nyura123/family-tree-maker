@@ -801,13 +801,32 @@
         }
         return style;
       }
+
+      function escapeHtmlAttr(value, mode = "html") {
+        const rawValue = String(value);
+        if (mode === "selector") {
+          return window.CSS && typeof CSS.escape === "function"
+            ? CSS.escape(rawValue)
+            : rawValue.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        }
+        return rawValue
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
       function renderCouple(person, generation, isSingleOrMiddleChild) {
           const rootAttrs = generation === 1 ? " root-family" : "";
           const rootTabIndex = generation === 1 ? " tabindex='0'" : "";
+        const personIdAttr = person.personId
+          ? ` data-person-id="${escapeHtmlAttr(person.personId)}"`
+          : "";
         let coupleHtml = `<div class="couple gen-${generation}">`;
         // person.spouse exists
         coupleHtml += `<div class="spouse-left">`;
-        coupleHtml += `<div class="person ${rootAttrs} ${renderMoreInfoClass(person)}" style="align-items: flex-end;" ${renderMoreInfoAttributes(person)} ${rootTabIndex}> `;
+        coupleHtml += `<div class="person ${rootAttrs} ${renderMoreInfoClass(person)}" style="align-items: flex-end;" ${renderMoreInfoAttributes(person)} ${rootTabIndex}${personIdAttr}> `;
         coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
         coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
         if (person.marriageLabel)
@@ -856,7 +875,10 @@
         } else {
           const rootAttrs = generation === 1 ? " root-family" : "";
           const rootTabIndex = generation === 1 ? " tabindex='0'" : "";
-          personHtml += `<div class="person ${rootAttrs} gen-${generation} ${renderMoreInfoClass(person)}" ${renderMoreInfoAttributes(person)} ${rootTabIndex} >`;
+          const personIdAttr = person.personId
+            ? ` data-person-id="${escapeHtmlAttr(person.personId)}"`
+            : "";
+          personHtml += `<div class="person ${rootAttrs} gen-${generation} ${renderMoreInfoClass(person)}" ${renderMoreInfoAttributes(person)} ${rootTabIndex}${personIdAttr} >`;
           personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
           personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
           if (person.marriageLabel)
@@ -1828,6 +1850,30 @@
         }
       }
 
+      function getPersonIdFromUrl() {
+        const personId = new URL(window.location.href).searchParams.get("personId");
+        return personId && personId.trim() ? personId.trim() : null;
+      }
+
+      function findPersonElementById(personId) {
+        if (!personId) return null;
+        const escapedPersonId = escapeHtmlAttr(personId, "selector");
+        return document.querySelector(
+          `#family-tree-container .person[data-person-id="${escapedPersonId}"]`,
+        );
+      }
+
+      function focusPersonById(personId) {
+        const personEl = findPersonElementById(personId);
+        if (!personEl) return false;
+        if (!personEl.hasAttribute("tabindex")) {
+          personEl.setAttribute("tabindex", "-1");
+        }
+        personEl.focus({ preventScroll: true });
+        personEl.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        return true;
+      }
+
       function setFamilyPage(pageIndex) {
         if (!activeRootFamilyTrees.length) return;
         const maxIndex = activeRootFamilyTrees.length - 1;
@@ -1835,8 +1881,6 @@
         for (const key of Object.keys(personRootFamilyIdsCache)) {
           delete personRootFamilyIdsCache[key];
         }
-        const activeTree = activeRootFamilyTrees[activeFamilyPageIndex];
-        activeTree.rootFamilyIds = activeTree.familyId ? [activeTree.familyId] : [];
         precomputeSpouseRootFamilyIds(activeRootFamilyTrees[activeFamilyPageIndex]);
         // Sync URL param for deep linking
         const tree = activeRootFamilyTrees[activeFamilyPageIndex];
@@ -1852,6 +1896,11 @@
             activeFamilyPageIndex,
           );
         requestAnimationFrame(() => {
+          const personIdFromUrl = getPersonIdFromUrl();
+          if (personIdFromUrl && focusPersonById(personIdFromUrl)) {
+            return;
+          }
+
           console.log('focusing root family element for page index:', activeFamilyPageIndex);
           const rootFamilyEl = document.querySelector("#family-tree-container .person.root-family");
           if (rootFamilyEl) {
@@ -1882,30 +1931,53 @@
           }
         });
 
-        // Read initial page from URL param
-        const urlParam = new URL(window.location.href).searchParams.get("family");
+        // Read initial family page from URL param
+        const familyUrlParam = new URL(window.location.href).searchParams.get("family");
         let startIndex = 0;
-        if (urlParam !== null) {
-          if (rootFamilyIdToIndexMap.has(urlParam)) {
-            startIndex = rootFamilyIdToIndexMap.get(urlParam);
+        if (familyUrlParam !== null) {
+          if (rootFamilyIdToIndexMap.has(familyUrlParam)) {
+            startIndex = rootFamilyIdToIndexMap.get(familyUrlParam);
           } else {
-            const n = parseInt(urlParam, 10);
+            const n = parseInt(familyUrlParam, 10);
             if (!isNaN(n) && n >= 0 && n < activeRootFamilyTrees.length) {
               startIndex = n;
             }
           }
         }
+
+        // if no valid family page param, but there's a personId param,
+        // try to find the 1st root family page that contains that person
+        const personIdParam = getPersonIdFromUrl();
+        if (!familyUrlParam && personIdParam && activeIndividuals[personIdParam]) {
+          const personRootFamilyIds = getRootFamilyIdsForIndividual(
+            personIdParam,
+            activeIndividuals,
+            activeFamilies,
+          ).filter((id) => rootFamilyIdToIndexMap.has(id));
+          if (personRootFamilyIds.length > 0) {
+            startIndex = rootFamilyIdToIndexMap.get(personRootFamilyIds[0]);
+          }
+        }
+
         activeFamilyPageIndex = 0;
         setFamilyPage(startIndex);
       }
 
       function goToRootFamilyId(familyId) {
-        const pageIndex = rootFamilyIdToIndexMap.get(familyId);
-        if (pageIndex !== undefined) {
-          setFamilyPage(pageIndex);
+        const url = new URL(window.location.href);
+        url.searchParams.set("family", familyId);
+        window.location.href = url.toString();
+      }
+
+      function goToRootFamilyIdForPerson(familyId, personId) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("family", familyId);
+        if (personId) {
+          url.searchParams.set("personId", personId);
         } else {
-          console.warn("Family ID not found in any tree:", familyId);
+          url.searchParams.delete("personId");
         }
+        window.location.href = url.toString();
       }
 
       function resetNotesStore() {
@@ -2185,7 +2257,7 @@
                     ? `${tree.name} & ${tree.spouse.name}`
                     : tree.name
                   : famId;
-                return `<button class="button-small" style="display:block;width:100%;text-align:left;margin-bottom:6px;" onclick="goToRootFamilyId('${famId}');closeSpouseFamiliesModal();">${label}</button>`;
+                return `<button class="button-small" style="display:block;width:100%;text-align:left;margin-bottom:6px;" onclick='goToRootFamilyIdForPerson(${JSON.stringify(famId)}, ${JSON.stringify(spousePersonId)});closeSpouseFamiliesModal();'>${label}</button>`;
               })
               .join("");
           }
