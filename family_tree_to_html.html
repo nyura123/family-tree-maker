@@ -1327,7 +1327,7 @@
           const baseNode = {
             name:
               person.name ||
-              "Unknown no name: " + `id: ${person.id || "no id"}`,
+              "Unknown no name: " + `id: ${person.id || "no id"}`
           };
           const dates = gedcomFormatDates(person.birth, person.death);
           if (dates) baseNode.dates = dates;
@@ -1404,6 +1404,63 @@
           return variants.length > 0 ? variants : [baseNode];
         }
 
+        const roots = getRootIndividuals(individuals, families);
+        
+        // sort roots by number of generations in their tree (descending), so that bigger trees are rendered first and get the top position on the page
+        roots.sort((a, b) => {
+          const aTreeSize = getTreeSize(individuals, families, a.id, new Set());
+          const bTreeSize = getTreeSize(individuals, families, b.id, new Set());
+          return bTreeSize - aTreeSize;
+        });
+
+        const trees = [];
+
+         // to track families that have been rendered under any root, to avoid rendering the same root family
+        const rootFamilyIds = new Set();
+        for (const root of roots) {
+           // clear visited family ids for each root,
+           // so that we can render same families under different roots.
+           // This is now ok since we show only one root at a time with pagination,
+           // so duplicate families won't appear on the same page.
+           // duplication under *same* root is still prevented.
+          familyIds.clear();
+
+          const familyNodes = buildNodeVariants(root.id);
+          for (const familyNode of familyNodes) {
+            if (familyNode.familyId) {
+              if (rootFamilyIds.has(familyNode.familyId)) {
+                continue;
+              }
+              rootFamilyIds.add(familyNode.familyId);
+            }
+            trees.push(familyNode);
+          }
+        }
+        return trees;
+      }
+
+      // get family id highest in the tree for a given individual,
+      // to be able to navigate to a spouse's family page.
+      // function getRootFamilyIdForIndividual(personId, individuals, families) {
+      //   const visited = new Set();
+      //   let currentPersonId = personId;
+      //   while (currentPersonId && !visited.has(currentPersonId)) {
+      //     visited.add(currentPersonId);
+      //     const person = individuals[currentPersonId];
+      //     if (!person) break;
+      //     const famcIds = (person.famcList || []).filter(
+      //       (famId) => families[famId],
+      //     );
+      //     if (famcIds.length === 0) break; // no more parents, we've reached the root family
+      //     const famcId = famcIds[0]; // if multiple, just take the first one
+      //     const fam = families[famcId];
+      //     if (!fam) break;
+      //     currentPersonId = fam.husbId === currentPersonId ? fam.wifeId : fam.husbId;
+      //   }
+      //   return currentPersonId ? visited : null;
+      // }
+
+      function getRootIndividuals(individuals, families) {
         const roots = [];
         for (const individual of Object.values(individuals)) {
           const childFamcIds = (individual.famcList || []).filter(
@@ -1440,49 +1497,30 @@
             roots.push(individual);
           }
         }
+        return roots;
+      }
 
-        function getTreeSize(personId, visited = new Set()) {
-          if (visited.has(personId)) return 0; // avoid infinite loops in case of circular references
-          visited.add(personId);
-          const person = individuals[personId];
-          if (!person) return 0;
-          let size = 1; // count self
-          const famIds = (person.famsList || []).filter(
-            (famId) => families[famId],
-          );
-          for (const famId of famIds) {
-            const fam = families[famId];
-            const spouseId = fam.husbId === personId ? fam.wifeId : fam.husbId;
-            if (spouseId) {
-              size += 1; // count spouse
-              size += getTreeSize(spouseId, visited);
-            }
-            for (const childId of fam.chilIds || []) {
-              size += getTreeSize(childId, visited);
-            }
+      function getTreeSize(individuals, families, personId, visited = new Set()) {
+        if (visited.has(personId)) return 0; // avoid infinite loops in case of circular references
+        visited.add(personId);
+        const person = individuals[personId];
+        if (!person) return 0;
+        let size = 1; // count self
+        const famIds = (person.famsList || []).filter(
+          (famId) => families[famId],
+        );
+        for (const famId of famIds) {
+          const fam = families[famId];
+          const spouseId = fam.husbId === personId ? fam.wifeId : fam.husbId;
+          if (spouseId) {
+            size += 1; // count spouse
+            size += getTreeSize(individuals, families, spouseId, visited);
           }
-          return size;
-        }
-
-        // sort roots by number of generations in their tree (descending), so that bigger trees are rendered first and get the top position on the page
-        roots.sort((a, b) => {
-          const aTreeSize = getTreeSize(a.id, new Set());
-          const bTreeSize = getTreeSize(b.id, new Set());
-          return bTreeSize - aTreeSize;
-        });
-
-        const trees = [];
-        for (const root of roots) {
-          const familyNodes = buildNodeVariants(root.id);
-          for (const familyNode of familyNodes) {
-            if (familyNode.familySkipped) {
-              // don't show duplicate root families with reversed spouses
-              continue;
-            }
-            trees.push(familyNode);
+          for (const childId of fam.chilIds || []) {
+            size += getTreeSize(individuals, families, childId, visited);
           }
         }
-        return trees;
+        return size;
       }
     </script>
   </head>
@@ -1695,20 +1733,21 @@
       let noteModalFocusTrapHandler = null;
       let notesById = {};
       let nextNoteId = 1;
-      let activeFamilyTrees = [];
+      let activeRootFamilyTrees = [];
       let activeFamilyTitle = "Family Tree";
       let activeFamilySubtitle = "";
       let activeFamilyPageIndex = 0;
+      const rootFamilyIdToIndexMap = new Map();
 
       function setFamilyPage(pageIndex) {
-        if (!activeFamilyTrees.length) return;
-        const maxIndex = activeFamilyTrees.length - 1;
+        if (!activeRootFamilyTrees.length) return;
+        const maxIndex = activeRootFamilyTrees.length - 1;
         activeFamilyPageIndex = Math.min(Math.max(pageIndex, 0), maxIndex);
         document.getElementById("family-tree-container").innerHTML =
           familyTreeJsonToHtml(
             activeFamilyTitle,
             activeFamilySubtitle,
-            activeFamilyTrees,
+            activeRootFamilyTrees,
             activeFamilyPageIndex,
           );
         requestAnimationFrame(() => {
@@ -1733,9 +1772,25 @@
       function initializeFamilyPaging(title, subtitle, familyTrees) {
         activeFamilyTitle = title || "Family Tree";
         activeFamilySubtitle = subtitle || "";
-        activeFamilyTrees = Array.isArray(familyTrees) ? familyTrees : [familyTrees];
+        activeRootFamilyTrees = Array.isArray(familyTrees) ? familyTrees : [familyTrees];
         activeFamilyPageIndex = 0;
         setFamilyPage(0);
+
+        rootFamilyIdToIndexMap.clear();
+        activeRootFamilyTrees.forEach((tree, index) => {
+          if (tree.id) {
+            rootFamilyIdToIndexMap.set(tree.id, index);
+          }
+        });
+      }
+
+      function goToRootFamilyId(familyId) {
+        const pageIndex = rootFamilyIdToIndexMap.get(familyId);
+        if (pageIndex !== undefined) {
+          setFamilyPage(pageIndex);
+        } else {
+          console.warn("Family ID not found in any tree:", familyId);
+        }
       }
 
       function resetNotesStore() {
