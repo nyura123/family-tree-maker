@@ -848,7 +848,6 @@
           coupleHtml += `<div class="person-dates">${person.spouse.dates}</div>`;
         if (person.spouse.occupation)
           coupleHtml += `<div class="person-occupation" title="${person.spouse.occupation}">${person.spouse.occupation}</div>`;
-        coupleHtml += renderPersonNote(person.spouse);
         const spouseRootFamilyIds = person.spouse.rootFamilyIds || [];
         const spouseCurrentFamilyIsOnlyRoot =
           spouseRootFamilyIds.length === 1 &&
@@ -858,8 +857,12 @@
           person.spouse.personId &&
           spouseRootFamilyIds.length > 0 &&
           !spouseCurrentFamilyIsOnlyRoot
-        )
-          coupleHtml += `<button class="button-small" style="margin-top:5px;font-size:0.75rem;" onclick="showSpouseFamiliesModal('${person.spouse.personId}')">View families</button>`;
+        ) {
+          // ensure pointer events don't flow through to parent .person div which also has a click handler for showing note modal
+          //  which would be bad UX if it opened when user was trying to click "View families" button
+          coupleHtml += `<div><button class="button-small" style="margin-top:5px;font-size:0.75rem;" onclick="event.stopPropagation();showSpouseFamiliesModal('${person.spouse.personId}')">View families</button></div>`;
+        }
+        coupleHtml += renderPersonNote(person.spouse);
         coupleHtml += `</div>`; // close person-info div
         coupleHtml += `</div>`; // close person div
         coupleHtml += `</div>`; // close spouse-right div
