@@ -1439,26 +1439,28 @@
         return trees;
       }
 
-      // get family id highest in the tree for a given individual,
-      // to be able to navigate to a spouse's family page.
-      // function getRootFamilyIdForIndividual(personId, individuals, families) {
-      //   const visited = new Set();
-      //   let currentPersonId = personId;
-      //   while (currentPersonId && !visited.has(currentPersonId)) {
-      //     visited.add(currentPersonId);
-      //     const person = individuals[currentPersonId];
-      //     if (!person) break;
-      //     const famcIds = (person.famcList || []).filter(
-      //       (famId) => families[famId],
-      //     );
-      //     if (famcIds.length === 0) break; // no more parents, we've reached the root family
-      //     const famcId = famcIds[0]; // if multiple, just take the first one
-      //     const fam = families[famcId];
-      //     if (!fam) break;
-      //     currentPersonId = fam.husbId === currentPersonId ? fam.wifeId : fam.husbId;
-      //   }
-      //   return currentPersonId ? visited : null;
-      // }
+      // get root family ids highest in the tree for a given individual,
+      function getRootFamilyIdsForIndividual(personId, individuals, families, visited = new Set()) {
+        const rootFamilyIds = new Set();
+         // avoid infinite loops in case of circular references
+        if (visited.has(personId)) return [];
+        visited.add(personId);
+        const person = individuals[personId];
+        if (!person) return [];
+        for (const famId of (person.famcList || [])) {
+          const fam = families[famId];
+          if (fam) {
+            const parentIds = [fam.husbId, fam.wifeId].filter((id) => id);
+
+            // root family of personId is the combination of root families of their parents
+            for (const parentId of parentIds) {
+              const parentRootFamilyIds = getRootFamilyIdsForIndividual(parentId, individuals, families, visited);
+              parentRootFamilyIds.forEach((id) => rootFamilyIds.add(id));
+            }
+          }
+        }
+        return Array.from(rootFamilyIds);
+      }
 
       function getRootIndividuals(individuals, families) {
         const roots = [];
@@ -1743,6 +1745,12 @@
         if (!activeRootFamilyTrees.length) return;
         const maxIndex = activeRootFamilyTrees.length - 1;
         activeFamilyPageIndex = Math.min(Math.max(pageIndex, 0), maxIndex);
+        // Sync URL param for deep linking
+        const tree = activeRootFamilyTrees[activeFamilyPageIndex];
+        const paramValue = tree && tree.familyId ? tree.familyId : String(activeFamilyPageIndex);
+        const url = new URL(window.location.href);
+        url.searchParams.set("family", paramValue);
+        history.replaceState(null, "", url.toString());
         document.getElementById("family-tree-container").innerHTML =
           familyTreeJsonToHtml(
             activeFamilyTitle,
@@ -1773,15 +1781,29 @@
         activeFamilyTitle = title || "Family Tree";
         activeFamilySubtitle = subtitle || "";
         activeRootFamilyTrees = Array.isArray(familyTrees) ? familyTrees : [familyTrees];
-        activeFamilyPageIndex = 0;
-        setFamilyPage(0);
 
         rootFamilyIdToIndexMap.clear();
         activeRootFamilyTrees.forEach((tree, index) => {
-          if (tree.id) {
-            rootFamilyIdToIndexMap.set(tree.id, index);
+          if (tree.familyId) {
+            rootFamilyIdToIndexMap.set(tree.familyId, index);
           }
         });
+
+        // Read initial page from URL param
+        const urlParam = new URL(window.location.href).searchParams.get("family");
+        let startIndex = 0;
+        if (urlParam !== null) {
+          if (rootFamilyIdToIndexMap.has(urlParam)) {
+            startIndex = rootFamilyIdToIndexMap.get(urlParam);
+          } else {
+            const n = parseInt(urlParam, 10);
+            if (!isNaN(n) && n >= 0 && n < activeRootFamilyTrees.length) {
+              startIndex = n;
+            }
+          }
+        }
+        activeFamilyPageIndex = 0;
+        setFamilyPage(startIndex);
       }
 
       function goToRootFamilyId(familyId) {
