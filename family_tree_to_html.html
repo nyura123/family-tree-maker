@@ -1321,7 +1321,7 @@
               child.famcList.push(fam.id);
             } else {
               console.warn(
-                "no child found for id:",
+                "no individual found for child id:",
                 childId,
                 "in family:",
                 fam.id,
@@ -1334,7 +1334,7 @@
               husb.famsList.push(fam.id);
             } else {
               console.warn(
-                "no husband found for id:",
+                "no individual found for husband id:",
                 fam.husbId,
                 "in family:",
                 fam.id,
@@ -1347,7 +1347,7 @@
               wife.famsList.push(fam.id);
             } else {
               console.warn(
-                "no wife found for id:",
+                "no individual found for wife id:",
                 fam.wifeId,
                 "in family:",
                 fam.id,
@@ -1919,7 +1919,7 @@
         }
 
         if (Array.isArray(node.children)) {
-          for (const child of node.children) {
+          for (const child of (node.children || [])) {
             precomputeSpouseRootFamilyIds(child);
           }
         }
