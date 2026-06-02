@@ -1653,21 +1653,21 @@
     >
       <!-- link button to ?source=english_royals -->
       <div>
-        <a href="?source=english_royals">
+        <!-- <a href="?source=english_royals">
           <button class="royal-blue button-small">
             Load English Royal Family GEDCOM from URL
           </button>
-        </a>
+        </a> -->
         <!-- <button class="royal-blue" onclick="loadEnglishRoyalFamilyGedcom()">Load English Royal Family GEDCOM</button> -->
         <!-- <br></br> -->
-        <div style="font-size: smaller; color: grey; margin-top: 3px">
+        <!-- <div style="font-size: smaller; color: grey; margin-top: 3px">
           Source:
           <a
             href="https://chronoplexsoftware.com/myfamilytree/samples/index.htm"
             target="_blank"
             >Chronoplex Software Samples</a
           >
-        </div>
+        </div> -->
       </div>
 
       <script>
@@ -1763,18 +1763,37 @@
         ];
       </script>
 
-      <a href="?">
-        <button class="button-small">Load sample family</button>
-      </a>
-
     </div>
       <br></br>
       <!-- select to load from the above list of public GEDCOM files, or load a default sample family tree in JSON format with the button below: -->
        <select id="public-gedcom-select" onchange="if(this.value) { //navigate to source=url of the selected option to load the GEDCOM file from that URL
+        if (value === 'sample_family') {
+          window.location.href = '?source=sample_family';
+          return;
+        }
+        if (value === 'english_royals') {
+          window.location.href = '?source=english_royals';
+          return;
+        }
         window.location.href = '?source=url&url=' + encodeURIComponent(this.value);
        }">
-        <option value="">Load from public GEDCOM samples...</option>
+        <option value="">Load family...</option>
         <script>
+
+          function addSampleFamilyOption() {
+            const option = document.createElement("option");
+            option.value = "sample_family"; // no URL, will load default sample family tree in JSON format
+            option.textContent = "Default Sample Family Tree (JSON)";
+            document.getElementById("public-gedcom-select").appendChild(option);
+          }
+          function addRoyalFamilyOption() {
+            const option = document.createElement("option");
+            option.value = "english_royals"; // will load English Royal Family GEDCOM from URL
+            option.textContent = "English Royal Family (GEDCOM)";
+            document.getElementById("public-gedcom-select").appendChild(option);
+          }
+          addSampleFamilyOption();
+          addRoyalFamilyOption();
           for (const url of publicGedUrls) {
             const name = url.split("/").pop().replace(/\.ged$/, "").replace(/\+/g, " ");
             const option = document.createElement("option");
@@ -1810,8 +1829,41 @@
             }
             document.getElementById("public-gedcom-select").appendChild(option);
           }
+
+          function syncSelectWithUrlParam() {
+            // sync select value with URL param on page load, to reflect the currently loaded GEDCOM file if it is from the public samples list
+            const urlParam = new URL(window.location.href).searchParams.get("url");
+            if (urlParam) {
+              const select = document.getElementById("public-gedcom-select");
+              for (const option of select.options) {
+                if (option.value === urlParam) {
+                  option.selected = true;
+                  break;
+                }
+              }
+            }
+          }
+          syncSelectWithUrlParam();
         </script>
       </select>
+      <div style="margin-top: 20px">
+      Sources:
+        <ul>
+          <li>
+            <a
+              href="https://chronoplexsoftware.com/myfamilytree/samples/index.htm"
+              target="_blank"
+              >Chronoplex Software Samples</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/D-Jeffrey/gedcom-samples/tree/main/famous%20family%20trees"
+              target="_blank"            >D-Jeffrey's GEDCOM Samples on GitHub</a
+            >
+          </li>
+        </ul>
+      </div>
     <script>
       // handle file drag and drop for the drop zone
       const dropZone = document.getElementById("drop-zone");
