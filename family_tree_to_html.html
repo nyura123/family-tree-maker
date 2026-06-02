@@ -1639,7 +1639,7 @@
       <textarea
         id="family-json-input"
         aria-label="Family tree input in JSON or GEDCOM format"
-        style="width: 100%; height: 500px"
+        style="width: 100%; height: 150px"
       ></textarea>
     </div>
 
@@ -1761,18 +1761,19 @@
         "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Western+Han+Dynasty.ged",
         "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Yuan+Dynasty.ged"
         ];
+
+        const otherSourceValues = [
+          "sample_family",
+          "english_royals"
+        ];
       </script>
 
     </div>
       <br></br>
       <!-- select to load from the above list of public GEDCOM files, or load a default sample family tree in JSON format with the button below: -->
        <select id="public-gedcom-select" onchange="if(this.value) { //navigate to source=url of the selected option to load the GEDCOM file from that URL
-        if (value === 'sample_family') {
-          window.location.href = '?source=sample_family';
-          return;
-        }
-        if (value === 'english_royals') {
-          window.location.href = '?source=english_royals';
+        if (otherSourceValues.includes(this.value)) {
+          window.location.href = '?source=' + this.value;
           return;
         }
         window.location.href = '?source=url&url=' + encodeURIComponent(this.value);
@@ -1831,16 +1832,35 @@
           }
 
           function syncSelectWithUrlParam() {
-            // sync select value with URL param on page load, to reflect the currently loaded GEDCOM file if it is from the public samples list
-            const urlParam = new URL(window.location.href).searchParams.get("url");
-            if (urlParam) {
+            const selectOption = (optionValue) => {
               const select = document.getElementById("public-gedcom-select");
               for (const option of select.options) {
-                if (option.value === urlParam) {
+                if (option.value === optionValue) {
                   option.selected = true;
                   break;
                 }
               }
+            };
+
+            const select = document.getElementById("public-gedcom-select");
+            // sync select value with URL param on page load, to reflect the currently loaded GEDCOM file if it is from the public samples list
+            const sourceParam = new URL(window.location.href).searchParams.get("source");
+            const urlParam = new URL(window.location.href).searchParams.get("url");
+
+            if (otherSourceValues.includes(sourceParam)) {
+              selectOption(sourceParam);
+              return;
+            }
+
+            if (!sourceParam && !urlParam) {
+              // select default family option
+              selectOption("sample_family");
+              return;
+            }
+
+            if (urlParam) {
+              // if URL param is present, try to find a matching option with that URL
+              selectOption(urlParam);
             }
           }
           syncSelectWithUrlParam();
