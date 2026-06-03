@@ -1677,7 +1677,7 @@
       ></textarea>
     </div>
 
-    <button onclick="updateFamilyTree(document.getElementById('family-json-input').value)">Update Family Tree</button>
+    <button onclick="updateFromTextArea()">Update Family Tree</button>
     <button onclick="exportAsHtml()">Export as HTML</button>
     <!-- <button onclick="exportGedcomAsJson()">Export GEDCOM as JSON</button> -->
     <button onclick="openHTMLInNewTab()">Open in New Tab</button>
@@ -2151,19 +2151,27 @@
         }
       };
 
-      const otherSourceValues = [
-        "sample_family",
-      ];
+      const otherSourceValues = {
+        "sample_family": "Default Sample Family Tree (JSON)"
+      };
       </script>
 
     </div>
       <br></br>
       <script>
-        function addSampleFamilyOption(selectEl) {
-          const option = document.createElement("option");
-          option.value = "sample_family"; // no URL, will load default sample family tree in JSON format
-          option.textContent = "Default Sample Family Tree (JSON)";
-          selectEl.appendChild(option);
+        function addOtherSourceOptions(selectEl) {
+          if (!selectEl || selectEl.dataset.otherOptionsInitialized === "true") {
+            return;
+          }
+
+          for (const [value, label] of Object.entries(otherSourceValues)) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            selectEl.appendChild(option);
+          }
+
+          selectEl.dataset.otherOptionsInitialized = "true";
         }
 
         function populatePublicGedcomSelectOptions(selectEl) {
@@ -2176,7 +2184,8 @@
           placeholderOption.textContent = "Load family...";
           selectEl.appendChild(placeholderOption);
 
-          addSampleFamilyOption(selectEl);
+          addOtherSourceOptions(selectEl);
+
           for (const [url, metadata] of Object.entries(publicGedUrls)) {
             const name = metadata?.title || url.split("/").pop().replace(/\.ged$/, "").replace(/\+/g, " ");
             const option = document.createElement("option");
@@ -2230,6 +2239,19 @@
                 <div class="selected-source-row">
                   <span class="selected-source-label">Type</span>
                   <span class="selected-source-value">Built-in sample data</span>
+                </div>
+              </div>
+            `;
+            return;
+          }
+
+          if (optionValue === "from_textarea") {
+            metaEl.innerHTML = `
+              <div class="selected-source-card">
+                <div class="selected-source-title">Custom input from Textarea</div>
+                <div class="selected-source-row">
+                  <span class="selected-source-label">Type</span>
+                  <span class="selected-source-value">User input from textarea</span>
                 </div>
               </div>
             `;
@@ -2293,7 +2315,7 @@
           const urlParam = new URL(window.location.href).searchParams.get("url");
           let selectedValue = "sample_family";
 
-          if (otherSourceValues.includes(sourceParam)) {
+          if (otherSourceValues[sourceParam]) {
             selectedValue = sourceParam;
           } else if (urlParam) {
             // if URL param is present, try to find a matching option with that URL
@@ -2641,6 +2663,13 @@
                 </body>
                 </html>`;
       }
+
+      function updateFromTextArea() {
+        updateFamilyTree(document.getElementById('family-json-input').value);
+        selectOption("");
+        renderSelectedSourceMeta("from_textarea");
+      }
+
       // export the family tree as an HTML file
       function exportAsHtml() {
         const wrappedHtml = getWrappedHtmlForExport();
@@ -2734,7 +2763,7 @@
           <p id="family-subtitle" class="family-sub"></p>
           <span class="ornament">✦</span>
           <select id="public-gedcom-select" onchange="if(this.value) { //navigate to source=url of the selected option to load the GEDCOM file from that URL
-            if (otherSourceValues.includes(this.value)) {
+            if (otherSourceValues[this.value]) {
               window.location.href = '?source=' + this.value;
               return;
             }
@@ -2915,6 +2944,7 @@
         // parse source from URL query parameter if present, otherwise use default familyJson
         const urlParams = new URLSearchParams(window.location.search);
         const sourceParam = urlParams.get("source");
+
         if (sourceParam == "url") {
           const urlToLoad = urlParams.get("url");
           if (urlToLoad) {
