@@ -2217,19 +2217,8 @@
           selectEl.dataset.optionsInitialized = "true";
         }
 
-        function ensureSourceUiElements() {
-          const sourceSelectEl = document.getElementById("public-gedcom-select");
-          const selectedSourceMetaEl = document.getElementById("selected-source-meta");
-
-          if (sourceSelectEl) {
-            populatePublicGedcomSelectOptions(sourceSelectEl);
-          }
-
-          return { sourceSelectEl, selectedSourceMetaEl };
-        }
-
         function renderSelectedSourceMeta(optionValue) {
-          const { selectedSourceMetaEl: metaEl } = ensureSourceUiElements();
+          const metaEl = document.getElementById("selected-source-meta");
           if (!metaEl) {
             return;
           }
@@ -2287,7 +2276,7 @@
         }
 
         function selectOption(optionValue) {
-          const { sourceSelectEl: select } = ensureSourceUiElements();
+          const select = document.getElementById("public-gedcom-select");
           if (!select) return;
 
           for (const option of select.options) {
@@ -2300,7 +2289,6 @@
 
         function syncSelectWithUrlParam() {
           // sync select value with URL param on page load, to reflect the currently loaded GEDCOM file if it is from the public samples list
-          ensureSourceUiElements();
           const sourceParam = new URL(window.location.href).searchParams.get("source");
           const urlParam = new URL(window.location.href).searchParams.get("url");
           let selectedValue = "sample_family";
@@ -2388,7 +2376,6 @@
         if (!activeRootFamilyTrees.length) return;
         const maxIndex = activeRootFamilyTrees.length - 1;
         activeFamilyPageIndex = Math.min(Math.max(pageIndex, 0), maxIndex);
-        ensureSourceUiElements();
         for (const key of Object.keys(personRootFamilyIdsCache)) {
           delete personRootFamilyIdsCache[key];
         }
@@ -2954,6 +2941,7 @@
           updateFamilyTree();
         }
 
+        populatePublicGedcomSelectOptions(document.getElementById("public-gedcom-select"));
         syncSelectWithUrlParam();
       });
     </script>
