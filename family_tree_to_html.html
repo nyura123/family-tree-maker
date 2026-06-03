@@ -1256,7 +1256,7 @@
                 const rec = notes[xref].rec;
                 rec.note = noteResult.note;
               } else {
-                console.warn("NOTE record found with id:", xref, "but no individual or family record references it. Ignoring this note.");
+                console.warn("NOTE record found with id:", xref, "but no individual or family record references it.");
                 // store the note text anyway, in case we find an individual or family record later that references this note id.
                 // This allows notes to be defined before the records that reference them, which is valid GEDCOM.
                 notes[xref] = { note: noteResult.note };
@@ -1582,20 +1582,22 @@
       }
 
       function getRootIndividuals(individuals, families) {
+        const isValidParentFamily = (famId) => {
+          const parentFamily = families[famId];
+          // ensure this is a valid family with individuals attached.
+          return individuals[parentFamily?.husbId] || individuals[parentFamily?.wifeId];
+        };
+
         const roots = [];
         for (const individual of Object.values(individuals)) {
-          const childFamcIds = (individual.famcList || []).filter(
-            (famId) => families[famId],
-          );
+          const childFamcIds = (individual.famcList || []).filter(isValidParentFamily);
           if (childFamcIds.length > 0) {
             // console.log('individual has parents, skipping as root:', individual.id, individual.name);
             // console.log("full record", individual);
             continue;
           }
           // roots.push(individual);
-          const spouseFamIds = (individual.famsList || []).filter(
-            (famId) => families[famId],
-          );
+          const spouseFamIds = (individual.famsList || []).filter(isValidParentFamily);
           let hasAncestor = false;
           for (const famId of spouseFamIds) {
             const fam = families[famId];
@@ -1603,9 +1605,7 @@
               fam.husbId === individual.id ? fam.wifeId : fam.husbId;
             const spouse = individuals[spouseId];
             if (spouse) {
-              const spouseFamcIds = (spouse.famcList || []).filter(
-                (famId) => families[famId],
-              );
+              const spouseFamcIds = (spouse.famcList || []).filter(isValidParentFamily);
               if (spouseFamcIds.length > 0) {
                 hasAncestor = true;
                 // console.log('spouse has parents, so individual is not a root. individual: ', individual.id, individual.name, ", spouse: ", spouse.id, spouse.name);
