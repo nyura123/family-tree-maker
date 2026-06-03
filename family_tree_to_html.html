@@ -212,10 +212,20 @@
       #source-select-slot {
         display: flex;
         justify-content: center;
+        width: 100%;
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #source-select-slot #public-gedcom-select {
+        width: 100%;
+        box-sizing: border-box;
       }
 
       #selected-source-meta {
         margin-top: 16px;
+        width: 100%;
         max-width: 720px;
         margin-left: auto;
         margin-right: auto;
@@ -1058,29 +1068,8 @@
         return (
           `
             <div class="family-tree">
-              <div id="note-modal" aria-hidden="true" onclick="closeNoteModal()">
-                <div class="note-modal-inner" role="dialog" aria-modal="true" aria-label="Person note" tabindex="-1" onclick="event.stopPropagation()">
-                  <span class="note-modal-close" role="button" tabindex="0" aria-label="Close note modal" onclick="closeNoteModal()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); closeNoteModal(); }">×</span>
-                  <div class="note-modal-content">
-                    <div class="person-note" id="note-modal-content" style="font-size: 1rem; white-space: pre-wrap;"></div>
-                  </div>
-                  <div class="note-modal-close-mobile">
-                    <button aria-label="Close note modal" onclick="closeNoteModal()">Close</button>
-                  </div>
-                </div>
-              </div>
-              <div id="spouse-families-modal" aria-hidden="true" onclick="closeSpouseFamiliesModal()">
-                <div class="note-modal-inner" role="dialog" aria-modal="true" aria-label="Spouse families" tabindex="-1" onclick="event.stopPropagation()">
-                  <span class="note-modal-close" role="button" tabindex="0" aria-label="Close" onclick="closeSpouseFamiliesModal()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); closeSpouseFamiliesModal(); }">×</span>
-                  <div class="note-modal-content">
-                    <h3 id="spouse-families-modal-title" style="margin:0 0 0.75rem;font-size:1.1rem;"></h3>
-                    <div id="spouse-families-modal-list"></div>
-                  </div>
-                  <div class="note-modal-close-mobile">
-                    <button aria-label="Close" onclick="closeSpouseFamiliesModal()">Close</button>
-                  </div>
-                </div>
-              </div>
+              <div id="note-modal-slot"></div>
+              <div id="spouse-families-modal-slot"></div>
               <header>
                 <span class="ornament">✦</span>
                 <h1 class="family-name">${title}</h1>
@@ -2191,6 +2180,33 @@
 
     </div>
       <br></br>
+      <template id="note-modal-template">
+        <div id="note-modal" aria-hidden="true" onclick="closeNoteModal()">
+          <div class="note-modal-inner" role="dialog" aria-modal="true" aria-label="Person note" tabindex="-1" onclick="event.stopPropagation()">
+            <span class="note-modal-close" role="button" tabindex="0" aria-label="Close note modal" onclick="closeNoteModal()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); closeNoteModal(); }">×</span>
+            <div class="note-modal-content">
+              <div class="person-note" id="note-modal-content" style="font-size: 1rem; white-space: pre-wrap;"></div>
+            </div>
+            <div class="note-modal-close-mobile">
+              <button aria-label="Close note modal" onclick="closeNoteModal()">Close</button>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template id="spouse-families-modal-template">
+        <div id="spouse-families-modal" aria-hidden="true" onclick="closeSpouseFamiliesModal()">
+          <div class="note-modal-inner" role="dialog" aria-modal="true" aria-label="Spouse families" tabindex="-1" onclick="event.stopPropagation()">
+            <span class="note-modal-close" role="button" tabindex="0" aria-label="Close" onclick="closeSpouseFamiliesModal()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); closeSpouseFamiliesModal(); }">×</span>
+            <div class="note-modal-content">
+              <h3 id="spouse-families-modal-title" style="margin:0 0 0.75rem;font-size:1.1rem;"></h3>
+              <div id="spouse-families-modal-list"></div>
+            </div>
+            <div class="note-modal-close-mobile">
+              <button aria-label="Close" onclick="closeSpouseFamiliesModal()">Close</button>
+            </div>
+          </div>
+        </div>
+      </template>
       <template id="source-ui-template">
         <select id="public-gedcom-select" onchange="if(this.value) { //navigate to source=url of the selected option to load the GEDCOM file from that URL
           if (otherSourceValues.includes(this.value)) {
@@ -2201,8 +2217,32 @@
         }"></select>
         <div id="selected-source-meta"></div>
       </template>
+      <div id="modal-ui-host" hidden></div>
       <div id="source-ui-host" hidden></div>
       <script>
+        function ensureModalElements() {
+          let noteModalEl = document.getElementById("note-modal");
+          let spouseFamiliesModalEl = document.getElementById("spouse-families-modal");
+
+          if (!noteModalEl || !spouseFamiliesModalEl) {
+            const host = document.getElementById("modal-ui-host");
+            const noteTemplate = document.getElementById("note-modal-template");
+            const spouseTemplate = document.getElementById("spouse-families-modal-template");
+            if (host) {
+              if (!noteModalEl && noteTemplate) {
+                host.appendChild(noteTemplate.content.cloneNode(true));
+                noteModalEl = document.getElementById("note-modal");
+              }
+              if (!spouseFamiliesModalEl && spouseTemplate) {
+                host.appendChild(spouseTemplate.content.cloneNode(true));
+                spouseFamiliesModalEl = document.getElementById("spouse-families-modal");
+              }
+            }
+          }
+
+          return { noteModalEl, spouseFamiliesModalEl };
+        }
+
         function addSampleFamilyOption(selectEl) {
           const option = document.createElement("option");
           option.value = "sample_family"; // no URL, will load default sample family tree in JSON format
@@ -2326,12 +2366,14 @@
               <div class="selected-source-title">${safeTitle}</div>
               <div class="selected-source-row">
                 <span class="selected-source-label">Source</span>
-                <span class="selected-source-value">${safeSourceName}</span>
+                <span class="selected-source-value">
+                  <a href="${safeSourceUrl}" target="_blank" rel="noopener noreferrer">${safeSourceName}</a>
+                </span>
               </div>
               <div class="selected-source-row">
                 <span class="selected-source-label">URL</span>
                 <span class="selected-source-value">
-                  <a href="${safeSourceUrl}" target="_blank" rel="noopener noreferrer">${safeSourceUrl}</a>
+                  <a href="${optionValue}" target="_blank" rel="noopener noreferrer">${optionValue}</a>
                 </span>
               </div>
             </div>
@@ -2441,6 +2483,7 @@
         const maxIndex = activeRootFamilyTrees.length - 1;
         activeFamilyPageIndex = Math.min(Math.max(pageIndex, 0), maxIndex);
         const { sourceSelectEl, selectedSourceMetaEl } = ensureSourceUiElements();
+        const { noteModalEl, spouseFamiliesModalEl } = ensureModalElements();
         for (const key of Object.keys(personRootFamilyIdsCache)) {
           delete personRootFamilyIdsCache[key];
         }
@@ -2465,6 +2508,14 @@
         const selectedSourceMetaSlot = document.getElementById("selected-source-meta-slot");
         if (selectedSourceMetaEl && selectedSourceMetaSlot) {
           selectedSourceMetaSlot.appendChild(selectedSourceMetaEl);
+        }
+        const noteModalSlot = document.getElementById("note-modal-slot");
+        if (noteModalEl && noteModalSlot) {
+          noteModalSlot.appendChild(noteModalEl);
+        }
+        const spouseFamiliesModalSlot = document.getElementById("spouse-families-modal-slot");
+        if (spouseFamiliesModalEl && spouseFamiliesModalSlot) {
+          spouseFamiliesModalSlot.appendChild(spouseFamiliesModalEl);
         }
         requestAnimationFrame(() => {
           const personIdFromUrl = getPersonIdFromUrl();
