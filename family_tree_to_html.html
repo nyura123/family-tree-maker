@@ -1677,7 +1677,7 @@
       ></textarea>
     </div>
 
-    <button onclick="updateFamilyTree()">Update Family Tree</button>
+    <button onclick="updateFamilyTree(document.getElementById('family-json-input').value)">Update Family Tree</button>
     <button onclick="exportAsHtml()">Export as HTML</button>
     <!-- <button onclick="exportGedcomAsJson()">Export GEDCOM as JSON</button> -->
     <button onclick="openHTMLInNewTab()">Open in New Tab</button>
@@ -2559,35 +2559,47 @@
         if (e.target.files[0]) readFamilyFile(e.target.files[0]);
       });
 
-      function isGedcomFile(f) {
-        return /\.(ged|gedcom)$/i.test(f.name);
-      }
-
       function readFamilyFile(f) {
         const r = new FileReader();
         r.onload = (e) => {
           const text = e.target.result;
-          const looksLikeGedcom = /^0\s+/.test(text);
-          if (isGedcomFile(f) || looksLikeGedcom) {
-            document.getElementById("family-json-input").value = text;
-            updateFamilyTree(true);
-          } else {
-            const prettyInput = JSON.stringify(JSON.parse(text), null, 2);
-            document.getElementById("family-json-input").value = prettyInput;
-            updateFamilyTree(false);
-          }
+          updateFamilyTree(text);
         };
         r.readAsText(f);
       }
 
       // parse the textarea content (JSON or GEDCOM) and update the family tree
-      function updateFamilyTree(forceGedcom, title = "") {
-        const input = document.getElementById("family-json-input").value.trim();
-        // Detect GEDCOM by explicit flag or by content starting with a level-0 line
-        const looksLikeGedcom = forceGedcom || /^0\s+/.test(input);
+      function updateFamilyTree(input, title = "") {
+        const inputEl = document.getElementById("family-json-input");
+        const rawInput = typeof input === "string" ? input : (inputEl?.value || "");
+        if (inputEl && inputEl.value !== rawInput) {
+          inputEl.value = rawInput;
+        }
+
+        // Try JSON first, then fall back to GEDCOM.
         try {
-          if (looksLikeGedcom) {
-            const { individuals, families } = parseGedcom(input);
+          try {
+            const parsedJson = JSON.parse(rawInput);
+            const prettyJson = JSON.stringify(parsedJson, null, 2);
+            if (inputEl) {
+              inputEl.value = prettyJson;
+            }
+            activeIndividuals = {};
+            activeFamilies = {};
+            populateNotesStore(parsedJson);
+            const title = parsedJson.title || "Family Tree";
+            const subtitle = parsedJson.subtitle || "";
+            initializeFamilyPaging(title, subtitle, parsedJson);
+            return;
+          } catch (jsonError) {
+            const { individuals, families } = parseGedcom(rawInput);
+            const hasGedcomData =
+              Object.keys(individuals).length > 0 ||
+              Object.keys(families).length > 0;
+            if (!hasGedcomData) {
+              throw new Error("Input is not valid JSON or GEDCOM");
+            }
+
             activeIndividuals = individuals;
             activeFamilies = families;
             const trees = gedcomToTree(individuals, families);
@@ -2604,20 +2616,8 @@
               surname = "Multiple Families";
             }
             title = title || "The " + surname + " Family";
-            // const subtitle =
-            //   trees.length > 1
-            //     ? `A genealogical record with ${trees.length} roots`
-            //     : "A genealogical record";
             const subtitle = "";
             initializeFamilyPaging(title, subtitle, trees);
-          } else {
-            activeIndividuals = {};
-            activeFamilies = {};
-            const parsedJson = JSON.parse(input);
-            populateNotesStore(parsedJson);
-            const title = parsedJson.title || "Family Tree";
-            const subtitle = parsedJson.subtitle || "";
-            initializeFamilyPaging(title, subtitle, parsedJson);
           }
         } catch (e) {
           alert("Error parsing file: " + e.message);
@@ -2720,8 +2720,7 @@
             );
           }
           const text = await response.text();
-          document.getElementById("family-json-input").value = text;
-          updateFamilyTree(true, title);
+          updateFamilyTree(text, title);
         } catch (error) {
           alert("Error loading GEDCOM file: " + error.message);
         }
@@ -2933,12 +2932,7 @@
             "No source parameter in URL, using default familyJson data.",
           );
           // populate the textarea with the default JSON
-          document.getElementById("family-json-input").value = JSON.stringify(
-            familyJson,
-            null,
-            2,
-          );
-          updateFamilyTree();
+          updateFamilyTree(JSON.stringify(familyJson));
         }
 
         populatePublicGedcomSelectOptions(document.getElementById("public-gedcom-select"));
