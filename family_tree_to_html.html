@@ -209,6 +209,71 @@
         cursor: pointer;
       }
 
+      #source-select-slot {
+        display: flex;
+        justify-content: center;
+      }
+
+      #selected-source-meta {
+        margin-top: 16px;
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .selected-source-card {
+        background: linear-gradient(180deg, #fffdf8 0%, #faf4e7 100%);
+        border: 1px solid var(--gold-lt);
+        border-radius: 10px;
+        padding: 12px 14px;
+        box-shadow: 0 3px 10px rgba(80, 55, 20, 0.08);
+      }
+
+      .selected-source-title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 8px;
+      }
+
+      .selected-source-row {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        margin-top: 4px;
+      }
+
+      .selected-source-label {
+        min-width: 60px;
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .selected-source-value {
+        font-size: 0.92rem;
+        color: var(--ink);
+      }
+
+      .selected-source-value a {
+        color: var(--royal-blue);
+        text-decoration-color: color-mix(in srgb, var(--royal-blue), white 45%);
+        word-break: break-all;
+      }
+
+      .selected-source-value a:hover {
+        text-decoration-thickness: 2px;
+      }
+
+      .selected-source-monospace {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 0.84rem;
+        word-break: break-all;
+      }
+
       body {
         background: var(--cream);
         font-family: "Cormorant Garamond", Georgia, serif;
@@ -1022,6 +1087,8 @@
                 <p class="family-sub">${subtitle}</p>
                 <span class="ornament">✦</span>
               </header>
+              <div id="source-select-slot"></div>
+              <div id="selected-source-meta-slot"></div>
               ${pagerHtml}` +
           activeTreeHtml +
           `</div>
@@ -1671,137 +1738,498 @@
       </div>
 
       <script>
-        const publicGedUrls = [
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/George+Washington+Family+Big.ged",
-        // "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/George+Washington+Family+Small.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/Kennedy+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/Lincoln+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/US+Presidents+Trees+I.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Advance+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Allstate+Insurance+Company.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Apple+Computer,+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/BBN+Technologies.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Banyan+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Broadcom+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/COMCAST+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Cisco+Systems,+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Dow+Jones+and+Cympany.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Fidelity+Information+Services.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Genentech,+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Honda+Motor+Co.,+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/LENOVO.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/LINKSYS+Division+of+Cisco,+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Meditech-Medical+Information+Technology,+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Motorola+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/NCR+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/NVIDIA+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Nintendo+of+America+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Northwest+Airlines.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Oracle+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Palm,+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/SanDisk+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Seiko+Epson+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Starbucks+Corporation.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/The+Home+Depot+U.S.A.+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/The+Timberland+Company.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/The+Walt+Disney+Company.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Time+Warner.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Williams-Sonoma+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Yahoo!+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Ziff+Davis+Publishing+Holdings+Inc.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/fictional%20characters/Harry+Potter+Family+Tree.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/fictional%20characters/Lord+of+the+Rings+Family+Tree.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/fictional%20characters/Simpsons+Cartoon+Family+Tree.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Australian+Languages+Super+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Human+and+Computer+Languages+Beta.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Paleo-Siberian+Super+language+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Sino-Tibetan+Language+Super+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Uralo-Yukaghir+Language+Super+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Human+Mitochondria+DNA+Haplogroups.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Human+Y-chromosome+DNA+haplogroups.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Microsoft+Windows-DOS-OS2.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Microsoft+Windows.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Structure+of+the+US+Government.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/The+Christian+Church.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Bach+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Bhutto+family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Keynes+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Nehru-Ghandi+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Shakespeare.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Tolkien+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Wedgwood+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Abbasids+House.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Ancestors+of+the+Prophet+Mohammad.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Babylonian+Gods.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Bible+Family+Tree.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Greek+Gods.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Japanes+Gods.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Norse+Gods.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Prophet+Mohommad+Family+Tree.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Roman+Gods.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Wikipedia+Gods+not+Yet+Connected.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Afgan-Pathan-Pashtun+Tribes+As+Descended+from+Quais.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Afghan-Pathan-Pashtun+People+as+Descended+from+Adam.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Antioch+House.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Eastern+Han+Dynasty.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/English+Tudor+Royal+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Hawaiian+Kings.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/House+of+Habsburg.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Irish+Kings.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Japanese+Imperial+Family.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Jerusalem+Kings.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Ming+Dynasty.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Ptolemaic+Dynasty.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Qing+Dynasty.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Royal92-Famous+European+Royalty+Gedcom.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Spartocids+Dynasty.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Sui+Dynasty.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Tang+Dynasty.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Trojan+Kings.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Western+Han+Dynasty.ged",
-        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Yuan+Dynasty.ged"
-        ];
+        const gedcomSamplesUrl = "https://github.com/D-Jeffrey/gedcom-samples";
 
-        const otherSourceValues = [
-          "sample_family",
-          "english_royals"
-        ];
+        const publicGedUrls = {
+        "https://family-tree-maker.wisp.place/english_royals.ged": {
+          title: "English Royal Family",
+          sourceName: "Chronoplex Software Samples",
+          sourceUrl: "https://chronoplexsoftware.com/myfamilytree/samples/index.htm",
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/George+Washington+Family+Big.ged": {
+          title: "George Washington Family (Big)",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        // "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/George+Washington+Family+Small.ged",
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/Kennedy+Family.ged": {
+          title: "Kennedy Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/Lincoln+Family.ged": {
+          title: "Lincoln Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/US%20presidents/US+Presidents+Trees+I.ged": {
+          title: "US Presidents Trees I",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Advance+Corporation.ged": {
+          title: "Advance Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Allstate+Insurance+Company.ged": {
+          title: "Allstate Insurance Company",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Apple+Computer,+Inc.ged": {
+          title: "Apple Computer, Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/BBN+Technologies.ged": {
+          title: "BBN Technologies",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Banyan+Corporation.ged": {
+          title: "Banyan Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Broadcom+Corporation.ged": {
+          title: "Broadcom Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/COMCAST+Corporation.ged": {
+          title: "COMCAST Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Cisco+Systems,+Inc.ged": {
+          title: "Cisco Systems, Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Dow+Jones+and+Cympany.ged": {
+          title: "Dow Jones and Company",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Fidelity+Information+Services.ged": {
+          title: "Fidelity Information Services",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Genentech,+Inc.ged": {
+          title: "Genentech, Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Honda+Motor+Co.,+Inc.ged": {
+          title: "Honda Motor Co., Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/LENOVO.ged": {
+          title: "LENOVO",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/LINKSYS+Division+of+Cisco,+Inc.ged": {
+          title: "LINKSYS Division of Cisco, Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Meditech-Medical+Information+Technology,+Inc.ged": {
+          title: "Meditech-Medical Information Technology, Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Motorola+Inc.ged": {
+          title: "Motorola Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/NCR+Corporation.ged": {
+          title: "NCR Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/NVIDIA+Corporation.ged": {
+          title: "NVIDIA Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Nintendo+of+America+Inc.ged": {
+          title: "Nintendo of America Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Northwest+Airlines.ged": {
+          title: "Northwest Airlines",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Oracle+Corporation.ged": {
+          title: "Oracle Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Palm,+Inc.ged": {
+          title: "Palm, Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/SanDisk+Corporation.ged": {
+          title: "SanDisk Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Seiko+Epson+Corporation.ged": {
+          title: "Seiko Epson Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Starbucks+Corporation.ged": {
+          title: "Starbucks Corporation",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/The+Home+Depot+U.S.A.+Inc.ged": {
+          title: "The Home Depot U.S.A. Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/The+Timberland+Company.ged": {
+          title: "The Timberland Company",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/The+Walt+Disney+Company.ged": {
+          title: "The Walt Disney Company",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Time+Warner.ged": {
+          title: "Time Warner",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Williams-Sonoma+Inc.ged": {
+          title: "Williams-Sonoma Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Yahoo!+Inc.ged": {
+          title: "Yahoo! Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/corporations/Ziff+Davis+Publishing+Holdings+Inc.ged": {
+          title: "Ziff Davis Publishing Holdings Inc",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/fictional%20characters/Harry+Potter+Family+Tree.ged": {
+          title: "Harry Potter Family Tree",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/fictional%20characters/Lord+of+the+Rings+Family+Tree.ged": {
+          title: "Lord of the Rings Family Tree",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/fictional%20characters/Simpsons+Cartoon+Family+Tree.ged": {
+          title: "Simpsons Cartoon Family Tree",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Australian+Languages+Super+Family.ged": {
+          title: "Australian Languages Super Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Human+and+Computer+Languages+Beta.ged": {
+          title: "Human and Computer Languages Beta",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Paleo-Siberian+Super+language+Family.ged": {
+          title: "Paleo-Siberian Super language Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Sino-Tibetan+Language+Super+Family.ged": {
+          title: "Sino-Tibetan Language Super Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/languages/Uralo-Yukaghir+Language+Super+Family.ged": {
+          title: "Uralo-Yukaghir Language Super Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Human+Mitochondria+DNA+Haplogroups.ged": {
+          title: "Human Mitochondria DNA Haplogroups",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Human+Y-chromosome+DNA+haplogroups.ged": {
+          title: "Human Y-chromosome DNA haplogroups",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Microsoft+Windows-DOS-OS2.ged": {
+          title: "Microsoft Windows-DOS-OS2",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Microsoft+Windows.ged": {
+          title: "Microsoft Windows",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/Structure+of+the+US+Government.ged": {
+          title: "Structure of the US Government",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/misc/The+Christian+Church.ged": {
+          title: "The Christian Church",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Bach+Family.ged": {
+          title: "Bach Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Bhutto+family.ged": {
+          title: "Bhutto family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Keynes+Family.ged": {
+          title: "Keynes Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Nehru-Ghandi+Family.ged": {
+          title: "Nehru-Ghandi Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Shakespeare.ged": {
+          title: "Shakespeare",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Tolkien+Family.ged": {
+          title: "Tolkien Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/politicians,%20writers,%20scientists,%20etc/Wedgwood+Family.ged": {
+          title: "Wedgwood Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Abbasids+House.ged": {
+          title: "Abbasids House",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Ancestors+of+the+Prophet+Mohammad.ged": {
+          title: "Ancestors of the Prophet Mohammad",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Babylonian+Gods.ged": {
+          title: "Babylonian Gods",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Bible+Family+Tree.ged": {
+          title: "Bible Family Tree",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Greek+Gods.ged": {
+          title: "Greek Gods",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Japanes+Gods.ged": {
+          title: "Japanes Gods",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Norse+Gods.ged": {
+          title: "Norse Gods",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Prophet+Mohommad+Family+Tree.ged": {
+          title: "Prophet Mohommad Family Tree",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Roman+Gods.ged": {
+          title: "Roman Gods",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/religious%20figures%20and%20systems/Wikipedia+Gods+not+Yet+Connected.ged": {
+          title: "Wikipedia Gods not Yet Connected",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Afgan-Pathan-Pashtun+Tribes+As+Descended+from+Quais.ged": {
+          title: "Afgan-Pathan-Pashtun Tribes As Descended from Quais",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Afghan-Pathan-Pashtun+People+as+Descended+from+Adam.ged": {
+          title: "Afghan-Pathan-Pashtun People as Descended from Adam",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Antioch+House.ged": {
+          title: "Antioch House",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Eastern+Han+Dynasty.ged": {
+          title: "Eastern Han Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/English+Tudor+Royal+Family.ged": {
+          title: "English Tudor Royal Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Hawaiian+Kings.ged": {
+          title: "Hawaiian Kings",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/House+of+Habsburg.ged": {
+          title: "House of Habsburg",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Irish+Kings.ged": {
+          title: "Irish Kings",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Japanese+Imperial+Family.ged": {
+          title: "Japanese Imperial Family",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Jerusalem+Kings.ged": {
+          title: "Jerusalem Kings",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Ming+Dynasty.ged": {
+          title: "Ming Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Ptolemaic+Dynasty.ged": {
+          title: "Ptolemaic Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Qing+Dynasty.ged": {
+          title: "Qing Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Royal92-Famous+European+Royalty+Gedcom.ged": {
+          title: "Royal92-Famous European Royalty Gedcom",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Spartocids+Dynasty.ged": {
+          title: "Spartocids Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Sui+Dynasty.ged": {
+          title: "Sui Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Tang+Dynasty.ged": {
+          title: "Tang Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Trojan+Kings.ged": {
+          title: "Trojan Kings",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Western+Han+Dynasty.ged": {
+          title: "Western Han Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        },
+        "https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples/main/famous%20family%20trees/royalty/Yuan+Dynasty.ged": {
+          title: "Yuan Dynasty",
+          sourceName: "D-Jeffrey GEDCOM Samples",
+          sourceUrl: gedcomSamplesUrl,
+        }
+      };
+
+      const otherSourceValues = [
+        "sample_family",
+      ];
       </script>
 
     </div>
       <br></br>
-      <!-- select to load from the above list of public GEDCOM files, or load a default sample family tree in JSON format with the button below: -->
-       <select id="public-gedcom-select" onchange="if(this.value) { //navigate to source=url of the selected option to load the GEDCOM file from that URL
-        if (otherSourceValues.includes(this.value)) {
-          window.location.href = '?source=' + this.value;
-          return;
+      <template id="source-ui-template">
+        <select id="public-gedcom-select" onchange="if(this.value) { //navigate to source=url of the selected option to load the GEDCOM file from that URL
+          if (otherSourceValues.includes(this.value)) {
+            window.location.href = '?source=' + this.value;
+            return;
+          }
+          window.location.href = '?source=url&url=' + encodeURIComponent(this.value);
+        }"></select>
+        <div id="selected-source-meta"></div>
+      </template>
+      <div id="source-ui-host" hidden></div>
+      <script>
+        function addSampleFamilyOption(selectEl) {
+          const option = document.createElement("option");
+          option.value = "sample_family"; // no URL, will load default sample family tree in JSON format
+          option.textContent = "Default Sample Family Tree (JSON)";
+          selectEl.appendChild(option);
         }
-        window.location.href = '?source=url&url=' + encodeURIComponent(this.value);
-       }">
-        <option value="">Load family...</option>
-        <script>
 
-          function addSampleFamilyOption() {
-            const option = document.createElement("option");
-            option.value = "sample_family"; // no URL, will load default sample family tree in JSON format
-            option.textContent = "Default Sample Family Tree (JSON)";
-            document.getElementById("public-gedcom-select").appendChild(option);
+        function populatePublicGedcomSelectOptions(selectEl) {
+          if (!selectEl || selectEl.dataset.optionsInitialized === "true") {
+            return;
           }
-          function addRoyalFamilyOption() {
-            const option = document.createElement("option");
-            option.value = "english_royals"; // will load English Royal Family GEDCOM from URL
-            option.textContent = "English Royal Family (GEDCOM)";
-            document.getElementById("public-gedcom-select").appendChild(option);
-          }
-          addSampleFamilyOption();
-          addRoyalFamilyOption();
-          for (const url of publicGedUrls) {
-            const name = url.split("/").pop().replace(/\.ged$/, "").replace(/\+/g, " ");
+
+          const placeholderOption = document.createElement("option");
+          placeholderOption.value = "";
+          placeholderOption.textContent = "Load family...";
+          selectEl.appendChild(placeholderOption);
+
+          addSampleFamilyOption(selectEl);
+          for (const [url, metadata] of Object.entries(publicGedUrls)) {
+            const name = metadata?.title || url.split("/").pop().replace(/\.ged$/, "").replace(/\+/g, " ");
             const option = document.createElement("option");
             option.value = url;
 
             // add a tooltip with the full URL, and show only the name in the dropdown
-            option.title = url;
+            option.title = metadata?.sourceName
+              ? `${url}\nSource: ${metadata.sourceName}`
+              : url;
             // special handling to parse categroy from https://raw.githubusercontent.com/D-Jeffrey/gedcom-samples urls
             const categoryMatch = url.match(/\/famous%20family%20trees\/([^\/]+)\//);
             const category = categoryMatch ? categoryMatch[1] : "";
@@ -1828,62 +2256,121 @@
             } else {
               option.textContent = name;
             }
-            document.getElementById("public-gedcom-select").appendChild(option);
+            selectEl.appendChild(option);
+          }
+          selectEl.dataset.optionsInitialized = "true";
+        }
+
+        function ensureSourceUiElements() {
+          let sourceSelectEl = document.getElementById("public-gedcom-select");
+          let selectedSourceMetaEl = document.getElementById("selected-source-meta");
+
+          if (!sourceSelectEl || !selectedSourceMetaEl) {
+            const template = document.getElementById("source-ui-template");
+            const host = document.getElementById("source-ui-host");
+            if (template && host) {
+              host.appendChild(template.content.cloneNode(true));
+              sourceSelectEl = document.getElementById("public-gedcom-select");
+              selectedSourceMetaEl = document.getElementById("selected-source-meta");
+            }
           }
 
-          function syncSelectWithUrlParam() {
-            const selectOption = (optionValue) => {
-              const select = document.getElementById("public-gedcom-select");
-              for (const option of select.options) {
-                if (option.value === optionValue) {
-                  option.selected = true;
-                  break;
-                }
-              }
-            };
+          if (sourceSelectEl) {
+            populatePublicGedcomSelectOptions(sourceSelectEl);
+          }
 
-            const select = document.getElementById("public-gedcom-select");
-            // sync select value with URL param on page load, to reflect the currently loaded GEDCOM file if it is from the public samples list
-            const sourceParam = new URL(window.location.href).searchParams.get("source");
-            const urlParam = new URL(window.location.href).searchParams.get("url");
+          return { sourceSelectEl, selectedSourceMetaEl };
+        }
 
-            if (otherSourceValues.includes(sourceParam)) {
-              selectOption(sourceParam);
+        function renderSelectedSourceMeta(optionValue) {
+          const { selectedSourceMetaEl: metaEl } = ensureSourceUiElements();
+          if (!metaEl) {
+            return;
+          }
+
+          if (!optionValue || optionValue === "sample_family") {
+            metaEl.innerHTML = `
+              <div class="selected-source-card">
+                <div class="selected-source-title">Default Sample Family Tree (JSON)</div>
+                <div class="selected-source-row">
+                  <span class="selected-source-label">Type</span>
+                  <span class="selected-source-value">Built-in sample data</span>
+                </div>
+              </div>
+            `;
+            return;
+          }
+
+          const metadata = publicGedUrls[optionValue];
+          if (!metadata) {
+            const safeValue = escapeHtmlAttr(optionValue);
+            metaEl.innerHTML = `
+              <div class="selected-source-card">
+                <div class="selected-source-title">Custom GEDCOM URL</div>
+                <div class="selected-source-row">
+                  <span class="selected-source-label">URL</span>
+                  <span class="selected-source-value selected-source-monospace">${safeValue}</span>
+                </div>
+              </div>
+            `;
+            return;
+          }
+
+          const safeTitle = escapeHtmlAttr(metadata.title || optionValue);
+          const safeSourceName = escapeHtmlAttr(metadata.sourceName || "Unknown source");
+          const sourceUrl = metadata.sourceUrl || optionValue;
+          const safeSourceUrl = escapeHtmlAttr(sourceUrl);
+
+          metaEl.innerHTML = `
+            <div class="selected-source-card">
+              <div class="selected-source-title">${safeTitle}</div>
+              <div class="selected-source-row">
+                <span class="selected-source-label">Source</span>
+                <span class="selected-source-value">${safeSourceName}</span>
+              </div>
+              <div class="selected-source-row">
+                <span class="selected-source-label">URL</span>
+                <span class="selected-source-value">
+                  <a href="${safeSourceUrl}" target="_blank" rel="noopener noreferrer">${safeSourceUrl}</a>
+                </span>
+              </div>
+            </div>
+          `;
+        }
+
+        function selectOption(optionValue) {
+          const { sourceSelectEl: select } = ensureSourceUiElements();
+          if (!select) return;
+
+          for (const option of select.options) {
+            if (option.value === optionValue) {
+              option.selected = true;
               return;
-            }
-
-            if (!sourceParam && !urlParam) {
-              // select default family option
-              selectOption("sample_family");
-              return;
-            }
-
-            if (urlParam) {
-              // if URL param is present, try to find a matching option with that URL
-              selectOption(urlParam);
             }
           }
-          syncSelectWithUrlParam();
-        </script>
-      </select>
-      <div style="margin-top: 20px">
-      Sources:
-        <ul>
-          <li>
-            <a
-              href="https://chronoplexsoftware.com/myfamilytree/samples/index.htm"
-              target="_blank"
-              >Chronoplex Software Samples</a
-            >
-          </li>
-          <li>
-            <a
-              href="https://github.com/D-Jeffrey/gedcom-samples/tree/main/famous%20family%20trees"
-              target="_blank"            >D-Jeffrey's GEDCOM Samples on GitHub</a
-            >
-          </li>
-        </ul>
-      </div>
+        }
+
+        function syncSelectWithUrlParam() {
+          // sync select value with URL param on page load, to reflect the currently loaded GEDCOM file if it is from the public samples list
+          ensureSourceUiElements();
+          const sourceParam = new URL(window.location.href).searchParams.get("source");
+          const urlParam = new URL(window.location.href).searchParams.get("url");
+          let selectedValue = "sample_family";
+
+          if (otherSourceValues.includes(sourceParam)) {
+            selectedValue = sourceParam;
+          } else if (urlParam) {
+            // if URL param is present, try to find a matching option with that URL
+            selectedValue = urlParam;
+          }
+
+          selectOption(selectedValue);
+          renderSelectedSourceMeta(selectedValue);
+        }
+      </script>
+      <!-- <div style="margin-top: 12px">
+        <small>Source list: <a href="https://chronoplexsoftware.com/myfamilytree/samples/index.htm" target="_blank" rel="noopener noreferrer">Chronoplex Software Samples</a> | <a href="https://github.com/D-Jeffrey/gedcom-samples/tree/main/famous%20family%20trees" target="_blank" rel="noopener noreferrer">D-Jeffrey's GEDCOM Samples</a></small>
+      </div> -->
     <script>
       // handle file drag and drop for the drop zone
       const dropZone = document.getElementById("drop-zone");
@@ -1953,6 +2440,7 @@
         if (!activeRootFamilyTrees.length) return;
         const maxIndex = activeRootFamilyTrees.length - 1;
         activeFamilyPageIndex = Math.min(Math.max(pageIndex, 0), maxIndex);
+        const { sourceSelectEl, selectedSourceMetaEl } = ensureSourceUiElements();
         for (const key of Object.keys(personRootFamilyIdsCache)) {
           delete personRootFamilyIdsCache[key];
         }
@@ -1970,16 +2458,22 @@
             activeRootFamilyTrees,
             activeFamilyPageIndex,
           );
+        const sourceSelectSlot = document.getElementById("source-select-slot");
+        if (sourceSelectEl && sourceSelectSlot) {
+          sourceSelectSlot.appendChild(sourceSelectEl);
+        }
+        const selectedSourceMetaSlot = document.getElementById("selected-source-meta-slot");
+        if (selectedSourceMetaEl && selectedSourceMetaSlot) {
+          selectedSourceMetaSlot.appendChild(selectedSourceMetaEl);
+        }
         requestAnimationFrame(() => {
           const personIdFromUrl = getPersonIdFromUrl();
           if (personIdFromUrl && focusPersonById(personIdFromUrl)) {
             return;
           }
 
-          console.log('focusing root family element for page index:', activeFamilyPageIndex);
           const rootFamilyEl = document.querySelector("#family-tree-container .person.root-family");
           if (rootFamilyEl) {
-            console.log('found root family element, setting focus');
             rootFamilyEl.focus();
             rootFamilyEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
           }
@@ -2278,13 +2772,6 @@
         window.open(url, "_blank");
       }
 
-      async function loadEnglishRoyalFamilyGedcom() {
-        return loadGedcomFromUrl(
-          "https://family-tree-maker.wisp.place/english_royals.ged",
-          "English Royal Family",
-        );
-      }
-
       async function loadGedcomFromUrl(url, title = "Family Tree from GEDCOM URL "+url) {
         try {
           const response = await fetch(url);
@@ -2452,13 +2939,7 @@
         // parse source from URL query parameter if present, otherwise use default familyJson
         const urlParams = new URLSearchParams(window.location.search);
         const sourceParam = urlParams.get("source");
-        if (sourceParam == "english_royals") {
-          console.log(
-            "Loading English Royal Family GEDCOM from URL parameter...",
-          );
-          // load the British Royal Family GEDCOM from the provided URL
-          loadEnglishRoyalFamilyGedcom();
-        } else if (sourceParam == "url") {
+        if (sourceParam == "url") {
           const urlToLoad = urlParams.get("url");
           if (urlToLoad) {
             console.log(
@@ -2482,6 +2963,8 @@
           );
           updateFamilyTree();
         }
+
+        syncSelectWithUrlParam();
       });
     </script>
   </body>
