@@ -1,0 +1,810 @@
+:root {
+  --cream: #f7f3ec;
+  --parchment: #ede5d4;
+  --ink: #1c1710;
+  --brown: #6b4c2a;
+  --rust: #a0522d;
+  --gold: #c9a84c;
+  --gold-lt: #e8d5a3;
+  --line: #c4a87a;
+  --muted: #7a6a54;
+  --card-bg: #fffdf7;
+  --light-green: #d4e8d0;
+  --line-width: 1.5px;
+  --vertical-connect-line-height: 20px;
+  --loving-blue-color: #6a8fb0;
+  --person-width: 64px;
+  --heart-width: 18px;
+  --person-margin: 5px;
+  --spouse-lighten-pcnt: 40%;
+  --border-radius: 7px;
+  --family-node-height: 170px;
+  --royal-blue: #617ac6;
+  --color-border: #c4a87a;
+  --color-border-secondary: #e8d5a3;
+}
+
+#note-modal {
+  position: fixed;
+  display: none;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+}
+
+#note-modal.open {
+  display: block;
+}
+
+#spouse-families-modal {
+  position: fixed;
+  display: none;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+}
+
+#spouse-families-modal.open {
+  display: block;
+}
+
+.note-modal-inner {
+  background: var(--card-bg);
+  border: 1px solid var(--gold-lt);
+  border-radius: 10px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  position: fixed;
+  min-height: 20vh;
+  max-height: 90vh;
+  /* let child scroll */
+  overflow: hidden;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.note-modal-content {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: scroll;
+  overflow-x: scroll;
+}
+
+.note-modal-close-mobile {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  #note-modal {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .note-modal-inner {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    max-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    padding: 1.25rem;
+
+    /* center content */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .note-modal-close {
+    display: none;
+  }
+
+  .note-modal-close-mobile {
+    display: block;
+  }
+}
+
+.note-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: var(--muted);
+}
+
+.note-modal-close:focus-visible {
+  outline: 2px solid var(--royal-blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+#drop-zone {
+  border: 1.5px dashed var(--color-border-secondary);
+  /* border-radius:12px; */
+  margin-block: 10px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--parchment);
+}
+#drop-zone:hover,
+#drop-zone.drag-over {
+  opacity: 0.8;
+}
+#drop-zone i {
+  font-size: 36px;
+  color: var(--color-text-secondary);
+  display: block;
+  margin-bottom: 12px;
+}
+#drop-zone p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin-top: 6px;
+}
+#drop-zone strong {
+  color: var(--color-text-primary);
+  font-size: 15px;
+  display: block;
+}
+#file-input {
+  display: none;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: var(--rust);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button-small {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.royal-blue {
+  background-color: var(--royal-blue);
+}
+
+select {
+  padding: 8px 12px;
+  font-size: 1rem;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 5px;
+  background-color: white;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+#public-gedcom-select {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+#selected-source-meta {
+  margin-top: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.selected-source-card {
+  background: linear-gradient(180deg, #fffdf8 0%, #faf4e7 100%);
+  border: 1px solid var(--gold-lt);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 3px 10px rgba(80, 55, 20, 0.08);
+}
+
+.selected-source-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.selected-source-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-top: 4px;
+}
+
+.selected-source-label {
+  min-width: 60px;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.selected-source-value {
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.selected-source-value a {
+  color: var(--royal-blue);
+  text-decoration-color: color-mix(in srgb, var(--royal-blue), white 45%);
+  word-break: break-all;
+}
+
+.selected-source-value a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.selected-source-monospace {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.84rem;
+  word-break: break-all;
+}
+
+body {
+  background: var(--cream);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 3rem 1.5rem 5rem;
+  /* background-image:
+              radial-gradient(ellipse at 20% 10%, #e8d9bf44 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 90%, #d4b89644 0%, transparent 50%),
+              /* reverse */
+  /* radial-gradient(ellipse at 20% 10%, #d4b89644 0%, transparent 50%), */
+  /* radial-gradient(ellipse at 80% 90%, #e8d9bf44 0%, transparent 50%);  */
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+header::before,
+header::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0.9rem auto;
+  width: 55%;
+}
+
+.family-name {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 21px; /* clamp(2rem, 4.5vw, 3.6rem);*/
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.family-sub {
+  font-size: 1rem;
+  color: var(--muted);
+  font-style: italic;
+  letter-spacing: 0.1em;
+  margin-top: 0.4rem;
+}
+
+.ornament {
+  font-size: 1.3rem;
+  color: var(--gold);
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.grid-two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 5px;
+  /* margin-block: var(--vertical-connect-line-height); */
+  width: 100%;
+}
+
+.line-right {
+  border-right: var(--line-width) solid var(--line);
+}
+
+.couple {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  /* display: grid; */
+  /* minmax ensures the spouses are equal width, allowing us to know where the center of left spouse is */
+  /* grid-template-columns: minmax(75px, 1fr) auto minmax(75px, 1fr); */
+}
+.spouse-left {
+  width: 150px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+.spouse-right {
+  width: 150px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.siblings {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: flex-start;
+  /* gap: 10px; */
+}
+
+/* alternate background colors for siblings children */
+/* .siblings > div:nth-child(odd) {
+        background-color: color-mix(in srgb, var(--cream), white 40%); */
+/* } */
+
+/* vertical line above child - doesn't work so commented out. see family-node ::after instead*/
+/* the rendered ::after is invisible, maybe z-index issues */
+/* .photo:not(.is-spouse)::after {
+        content: "";
+        position: absolute;
+        top: calc(var(--vertical-connect-line-height) * -1);
+        height: calc(var(--vertical-connect-line-height) * 1);
+        left: 0;
+        right: 50%;
+        border-right: calc(var(--line-width) * 1) solid var(--line);
+      } */
+
+.couple-heart {
+  width: var(--heart-width);
+  font-size: 30px;
+  margin-top: 10px;
+  color: var(--rust);
+  text-align: center;
+}
+
+.family-tree {
+  width: fit-content;
+  padding-right: 20px;
+  position: relative;
+}
+
+.family-node {
+  min-width: 120px;
+  padding-top: var(--vertical-connect-line-height);
+  position: relative;
+  /* fixed total height controls how tall the flexible lines between generations are. */
+  /* the height includes the person card and the connecting lines */
+  height: var(--family-node-height);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.family-node.single-child:not(.has-spouse)::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  height: calc(var(--vertical-connect-line-height) * 1);
+  left: 0;
+  right: 50%;
+
+  /* needed because the .photo vertical line is hidden by this absolute div */
+  border-right: calc(var(--line-width) * 1) solid var(--line);
+}
+
+.family-node.middle-child {
+  /* for middle children, a full top border */
+  border-top: calc(var(--line-width) * 1) solid var(--line);
+}
+.family-node.middle-child::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  height: calc(var(--vertical-connect-line-height) * 1);
+  left: 0;
+  right: 50%;
+
+  /* needed because the .photo vertical line is hidden by this absolute div */
+  border-right: calc(var(--line-width) * 1) solid var(--line);
+}
+.family-node.middle-child.has-spouse::after {
+  /* move it to the left so that we're pointing to center of child spouse instead of
+         center of couple (heart)   */
+  right: calc(
+    50% + var(--person-width) / 2 + var(--heart-width) / 2 +
+      var(--person-margin)
+  );
+}
+
+.family-node.first-of-children::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  /* subtract line-width to account for top border */
+  height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
+  left: 50%;
+  right: 0;
+  border-top: calc(var(--line-width) * 1) solid var(--line);
+
+  /* needed because the .photo vertical line is hidden by this absolute div */
+  border-left: calc(var(--line-width) * 1) solid var(--line);
+  border-top-left-radius: var(--border-radius);
+}
+.family-node.first-of-children.has-spouse::after {
+  /* move it to the left so that we're pointing to center of child spouse instead of
+         center of couple (heart)   */
+  left: calc(
+    50% - var(--person-width) / 2 - var(--heart-width) / 2 -
+      var(--person-margin)
+  );
+}
+
+.family-node.last-of-children::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  /* subtract line-width to account for top border */
+  height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
+  left: 0;
+  right: 50%;
+  border-top: calc(var(--line-width) * 1) solid var(--line);
+
+  /* needed because the .photo vertical line is hidden by this absolute div */
+  border-right: calc(var(--line-width) * 1) solid var(--line);
+  border-top-right-radius: var(--border-radius);
+}
+.family-node.last-of-children.has-spouse::after {
+  /* move it to the left so that we're pointing to center of child spouse instead of
+         center of couple (heart)   */
+  right: calc(
+    50% + var(--person-width) / 2 + var(--heart-width) / 2 +
+      var(--person-margin)
+  );
+}
+
+.family-node.single-child.has-spouse::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  /* subtract line-width to account for top border */
+  height: calc(var(--vertical-connect-line-height) * 1 - var(--line-width));
+  /* for single-child couple, we want the top border from center of child spouse to couple heart center */
+  left: calc(
+    50% - var(--person-width) / 2 - var(--heart-width) / 2 -
+      var(--person-margin)
+  );
+  right: 50%;
+  border-top: calc(var(--line-width) * 1) solid var(--line);
+
+  /* needed because the .photo vertical line is hidden by this absolute div */
+  border-left: calc(var(--line-width) * 1) solid var(--line);
+  border-top-left-radius: var(--border-radius);
+}
+
+/* ── Person card ── */
+.person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* background-color: red; */
+  /* width: 110px; */
+  margin: 0 var(--person-margin);
+  /* padding-bottom: 3px; */
+  /* border-bottom: var(--line-width) solid var(--light-green); */
+}
+
+.more-info-available .photo::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border);
+  pointer-events: default;
+  cursor: pointer;
+}
+
+.photo {
+  /* anchor for vertical lines ::after */
+  position: relative;
+
+  width: var(--person-width);
+  /* padding: 10px; */
+  height: var(--person-width);
+  border-radius: 50%;
+  background: var(--parchment);
+  border: 2px solid var(--gold-lt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Playfair Display", serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--brown);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* uppercase the initials */
+  text-transform: uppercase;
+}
+
+.photo::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  pointer-events: none;
+}
+
+/* generation-tinted photo rings */
+.gen-1 .photo {
+  background: #e8d5b0;
+  border-color: #c9a84c;
+}
+/* lighten spouse colors */
+/* .gen-1 .spouse-right .photo {
+        background-color: color-mix(in srgb, #e8d5b0, white var(--spouse-lighten-pcnt));
+        border-color: color-mix(in srgb, #c9a84c, white var(--spouse-lighten-pcnt));
+      } */
+
+.gen-2 .photo {
+  background: #d4e8d0;
+  border-color: #7aad72;
+}
+.gen-2 .spouse-right .photo {
+  background-color: color-mix(
+    in srgb,
+    #d4e8d0,
+    white var(--spouse-lighten-pcnt)
+  );
+  border-color: color-mix(in srgb, #7aad72, white var(--spouse-lighten-pcnt));
+}
+
+.gen-3 .photo {
+  background: #d0dce8;
+  border-color: #6a8fb0;
+}
+.gen-3 .spouse-right .photo {
+  background-color: color-mix(
+    in srgb,
+    #d0dce8,
+    white var(--spouse-lighten-pcnt)
+  );
+  border-color: color-mix(in srgb, #6a8fb0, white var(--spouse-lighten-pcnt));
+}
+
+.gen-4 .photo {
+  background: #e8d4e4;
+  border-color: #b07aa0;
+}
+.gen-4 .spouse-right .photo {
+  background-color: color-mix(
+    in srgb,
+    #e8d4e4,
+    white var(--spouse-lighten-pcnt)
+  );
+  border-color: color-mix(in srgb, #b07aa0, white var(--spouse-lighten-pcnt));
+}
+
+.gen-5 .photo {
+  background: #d4d0e8;
+  border-color: #7a72ad;
+}
+.gen-5 .spouse-right .photo {
+  background-color: color-mix(
+    in srgb,
+    #d4d0e8,
+    white var(--spouse-lighten-pcnt)
+  );
+  border-color: color-mix(in srgb, #7a72ad, white var(--spouse-lighten-pcnt));
+}
+
+.gen-6 .photo {
+  background: #efc1c1;
+  border-color: #e8968c;
+}
+.gen-6 .spouse-right .photo {
+  background-color: color-mix(
+    in srgb,
+    #efc1c1,
+    white var(--spouse-lighten-pcnt)
+  );
+  border-color: color-mix(in srgb, #e8968c, white var(--spouse-lighten-pcnt));
+}
+
+/* .gen-7 .photo { background: #d0e8d4; border-color: #72ad7a; } */
+
+.person-info {
+  text-align: center;
+  margin-top: 7px;
+
+  /* allow multiline text but cut off with ellipsis */
+  display: -webkit-box;
+  -webkit-line-clamp: 10;
+  line-clamp: 10;
+  -webkit-box-orient: vertical;
+  box-orient: vertical;
+  overflow: hidden;
+}
+.spouse-left .person-info {
+  text-align: right;
+}
+.spouse-right .person-info {
+  text-align: left;
+}
+
+.person-name {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+
+  /* ellipsis: "..."; */
+  /* max-width: 150px; */
+  /* white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; */
+}
+
+.person-dates {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
+.person-occupation {
+  font-size: 0.66rem;
+  color: var(--brown);
+  margin-top: 2px;
+}
+
+.person-note {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: var(--rust);
+  font-style: italic;
+}
+
+/* .person-note:focus-visible {
+        outline: 2px solid var(--royal-blue);
+        outline-offset: 2px;
+        border-radius: 2px;
+      } */
+
+.person-marriage-branch {
+  margin-top: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--gold-lt);
+  border-radius: 999px;
+  font-size: 0.58rem;
+  color: var(--brown);
+  background: color-mix(in srgb, var(--gold-lt), white 55%);
+  letter-spacing: 0.03em;
+  display: inline-block;
+}
+
+.couple-family-skipped {
+  margin-top: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--gold-lt);
+  border-radius: 3px;
+  font-size: 0.58rem;
+  color: var(--brown);
+  background: color-mix(in srgb, var(--gold-lt), white 65%);
+  letter-spacing: 0.03em;
+  display: inline-block;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.person {
+  animation: fadeUp 0.6s ease both;
+}
+
+.gen-1 .person {
+  animation-delay: 0.05s;
+}
+
+.gen-2 .person {
+  animation-delay: 0.15s;
+}
+
+.gen-3 .person {
+  animation-delay: 0.25s;
+}
+
+.gen-4 .person {
+  animation-delay: 0.35s;
+}
+
+.gen-5 .person {
+  animation-delay: 0.45s;
+}
+
+.gen-6 .person {
+  animation-delay: 0.55s;
+}
+
+/* .gen-7 .person { animation-delay: 0.65s; } */
+
+.person:hover .photo {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.person:focus {
+  outline: none;
+}
+
+.person:focus .photo,
+.person:focus-visible .photo {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 3px var(--royal-blue),
+    0 4px 16px rgba(0, 0, 0, 0.14);
+}
+
+.photo {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
