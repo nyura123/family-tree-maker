@@ -1,0 +1,17 @@
+{
+  "name": "family-tree-maker-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:open": "vite --open",
+    "build:deploy": "vite build",
+    "preview:deploy": "vite preview",
+    "deploy:wisp": "wisp-cli deploy YOUR-HANDLE.bsky.social --path ./dist --site family-tree-maker",
+    "deploy": "npm run build:deploy && npm run deploy:wisp"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}
