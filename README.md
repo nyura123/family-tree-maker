@@ -25,7 +25,7 @@ npm run dev:open
 Generate a static deploy bundle where `index.html` imports a single JavaScript file.
 
 ```bash
-npm run build:deploy
+npm run build
 ```
 
 Output is written to `dist/`:
@@ -37,12 +37,20 @@ Output is written to `dist/`:
 Preview the build locally:
 
 ```bash
-npm run preview:deploy
+npm run preview
 ```
 
 ## Deploy To Wisp
 
 Requires wisp-cli installed and authenticated.
+
+`npm run deploy:wisp` prompts for your Bluesky handle if none is configured.
+
+Optional: set `WISP_HANDLE` to skip the prompt:
+
+```bash
+WISP_HANDLE=some-handle npm run deploy:wisp
+```
 
 Deploy using existing dist output:
 
