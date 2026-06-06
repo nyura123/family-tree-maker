@@ -1,7 +1,7 @@
 export const gedcomSamplesUrl = "https://github.com/D-Jeffrey/gedcom-samples";
 
 export const publicGedUrls = {
-  "https://family-tree-maker.wisp.place/english_royals.ged": {
+  "/english_royals.ged": {
     title: "English Royal Family",
     sourceName: "Chronoplex Software Samples",
     sourceUrl: "https://chronoplexsoftware.com/myfamilytree/samples/index.htm",
