@@ -1,4 +1,5 @@
 import { parseGedcom, gedcomToTree } from "./gedcom.js";
+import { html } from "./html.js";
 
 export function getInitials(name) {
   const parts = (name || "").split(" ").filter((part) => part.length > 0);
@@ -40,7 +41,7 @@ export function escapeHtmlAttr(value, mode = "html") {
 function renderPersonNote(person) {
   if (person.note) {
     const clampedNote = person.note.length > 10 ? person.note.slice(0, 10) + "..." : person.note;
-    return `<span class="person-note">[Note] ${clampedNote}</span>`;
+    return html`<span class="person-note">[Note] ${clampedNote}</span>`;
   }
   return "";
 }
@@ -60,36 +61,23 @@ function renderCouple(person, generation) {
   const personIdAttr = person.personId
     ? ` data-person-id="${escapeHtmlAttr(person.personId)}"`
     : "";
-  let coupleHtml = `<div class="couple gen-${generation}">`;
+  const leftPersonDetails = html`
+    ${person.marriageLabel
+      ? html`<div class="person-marriage-branch">${person.marriageLabel}</div>`
+      : ""}
+    ${person.dates ? html`<div class="person-dates">${person.dates}</div>` : ""}
+    ${person.occupation
+      ? html`<div class="person-occupation" title="${person.occupation}">${person.occupation}</div>`
+      : ""}
+    ${renderPersonNote(person)}
+  `;
 
-  coupleHtml += `<div class="spouse-left">`;
-  coupleHtml += `<div class="person ${rootAttrs} ${renderMoreInfoClass(person)}" style="align-items: flex-end;" ${renderMoreInfoAttributes(person)} ${rootTabIndex}${personIdAttr}> `;
-  coupleHtml += `<div class="photo">${getInitials(person.name)}</div>`;
-  coupleHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
-  if (person.marriageLabel) {
-    coupleHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
-  }
-  if (person.dates) {
-    coupleHtml += `<div class="person-dates">${person.dates}</div>`;
-  }
-  if (person.occupation) {
-    coupleHtml += `<div class="person-occupation" title="${person.occupation}">${person.occupation}</div>`;
-  }
-  coupleHtml += renderPersonNote(person);
-  coupleHtml += `</div></div></div>`;
-
-  coupleHtml += `<div class="couple-heart">♥</div>`;
-
-  coupleHtml += `<div class="spouse-right">`;
-  coupleHtml += `<div class="person ${renderMoreInfoClass(person.spouse)}" style="align-items: flex-start;" ${renderMoreInfoAttributes(person.spouse)}>`;
-  coupleHtml += `<div class="photo " style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>`;
-  coupleHtml += `<div class="person-info"><div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div>`;
-  if (person.spouse.dates) {
-    coupleHtml += `<div class="person-dates">${person.spouse.dates}</div>`;
-  }
-  if (person.spouse.occupation) {
-    coupleHtml += `<div class="person-occupation" title="${person.spouse.occupation}">${person.spouse.occupation}</div>`;
-  }
+  const spouseDetails = html`
+    ${person.spouse.dates ? html`<div class="person-dates">${person.spouse.dates}</div>` : ""}
+    ${person.spouse.occupation
+      ? html`<div class="person-occupation" title="${person.spouse.occupation}">${person.spouse.occupation}</div>`
+      : ""}
+  `;
 
   const spouseRootFamilyIds = person.spouse.rootFamilyIds || [];
   const spouseCurrentFamilyIsOnlyRoot =
@@ -97,18 +85,39 @@ function renderCouple(person, generation) {
     person.spouse.familyId &&
     spouseRootFamilyIds[0] === person.spouse.familyId;
 
-  if (person.spouse.personId && spouseRootFamilyIds.length > 0 && !spouseCurrentFamilyIsOnlyRoot) {
-    coupleHtml += `<div><button class="button-small" style="margin-top:5px;font-size:0.75rem;" onclick="event.stopPropagation();showSpouseFamiliesModal('${person.spouse.personId}')">View families</button></div>`;
-  }
+  const viewFamiliesButton =
+    person.spouse.personId && spouseRootFamilyIds.length > 0 && !spouseCurrentFamilyIsOnlyRoot
+      ? html`<div><button class="button-small" style="margin-top:5px;font-size:0.75rem;" onclick="event.stopPropagation();showSpouseFamiliesModal('${person.spouse.personId}')">View families</button></div>`
+      : "";
 
-  coupleHtml += renderPersonNote(person.spouse);
-  coupleHtml += `</div></div></div></div>`;
-
-  if (person.familySkipped) {
-    coupleHtml += `<div class="couple-family-skipped">Family already rendered in another tree</div>`;
-  }
-
-  return coupleHtml;
+  return html`
+    <div class="couple gen-${generation}">
+      <div class="spouse-left">
+        <div class="person ${rootAttrs} ${renderMoreInfoClass(person)}" style="align-items: flex-end;" ${renderMoreInfoAttributes(person)} ${rootTabIndex}${personIdAttr}>
+          <div class="photo">${getInitials(person.name)}</div>
+          <div class="person-info">
+            <div class="person-name" title="${person.name}">${person.name}</div>
+            ${leftPersonDetails}
+          </div>
+        </div>
+      </div>
+      <div class="couple-heart">♥</div>
+      <div class="spouse-right">
+        <div class="person ${renderMoreInfoClass(person.spouse)}" style="align-items: flex-start;" ${renderMoreInfoAttributes(person.spouse)}>
+          <div class="photo " style="${renderPersonStyle(person.spouse)}">${getInitials(person.spouse.name)}</div>
+          <div class="person-info">
+            <div class="person-name" title="${person.spouse.name}">${person.spouse.name}</div>
+            ${spouseDetails}
+            ${viewFamiliesButton}
+            ${renderPersonNote(person.spouse)}
+          </div>
+        </div>
+      </div>
+    </div>
+    ${person.familySkipped
+      ? html`<div class="couple-family-skipped">Family already rendered in another tree</div>`
+      : ""}
+  `;
 }
 
 function renderPerson(person, generation) {
@@ -122,26 +131,25 @@ function renderPerson(person, generation) {
     ? ` data-person-id="${escapeHtmlAttr(person.personId)}"`
     : "";
 
-  let personHtml = `<div class="person ${rootAttrs} gen-${generation} ${renderMoreInfoClass(person)}" ${renderMoreInfoAttributes(person)} ${rootTabIndex}${personIdAttr} >`;
-  personHtml += `<div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>`;
-  personHtml += `<div class="person-info"><div class="person-name" title="${person.name}">${person.name}</div>`;
-  if (person.marriageLabel) {
-    personHtml += `<div class="person-marriage-branch">${person.marriageLabel}</div>`;
-  }
-  if (person.dates) {
-    personHtml += `<div class="person-dates">${person.dates}</div>`;
-  }
-  if (person.occupation) {
-    personHtml += `<div class="person-occupation" title="${person.occupation}">${person.occupation}</div>`;
-  }
-  personHtml += renderPersonNote(person);
-  personHtml += `</div></div>`;
-  return personHtml;
+  return html`
+    <div class="person ${rootAttrs} gen-${generation} ${renderMoreInfoClass(person)}" ${renderMoreInfoAttributes(person)} ${rootTabIndex}${personIdAttr}>
+      <div class="photo" style="${renderPersonStyle(person)}">${getInitials(person.name)}</div>
+      <div class="person-info">
+        <div class="person-name" title="${person.name}">${person.name}</div>
+        ${person.marriageLabel
+          ? html`<div class="person-marriage-branch">${person.marriageLabel}</div>`
+          : ""}
+        ${person.dates ? html`<div class="person-dates">${person.dates}</div>` : ""}
+        ${person.occupation
+          ? html`<div class="person-occupation" title="${person.occupation}">${person.occupation}</div>`
+          : ""}
+        ${renderPersonNote(person)}
+      </div>
+    </div>
+  `;
 }
 
 function renderNode(node, generation = 1, isFirstChild = true, isLastChild = true) {
-  let nodeHtml = "<div style='flex: 1;'>";
-
   const borderClass =
     generation === 1
       ? ""
@@ -153,30 +161,24 @@ function renderNode(node, generation = 1, isFirstChild = true, isLastChild = tru
             ? "last-of-children"
             : "middle-child";
 
-  nodeHtml += `<div class="family-node ${borderClass} ${node.spouse ? "has-spouse" : ""}">`;
-  nodeHtml += renderPerson(node, generation);
+  const children = Array.isArray(node.children) ? node.children : [];
+  const childNodesHtml = children.map((child, index) =>
+    renderNode(child, generation + 1, index === 0, index === children.length - 1),
+  );
 
-  if (node.children && node.children.length > 0) {
-    nodeHtml += renderConnectionToChildren();
-    nodeHtml += "</div>";
-    nodeHtml += `<div class="siblings">`;
-    for (let i = 0; i < node.children.length; i++) {
-      const child = node.children[i];
-      const firstChild = i === 0;
-      const lastChild = i === node.children.length - 1;
-      nodeHtml += renderNode(child, generation + 1, firstChild, lastChild);
-    }
-    nodeHtml += "</div>";
-  } else {
-    nodeHtml += "</div>";
-  }
-
-  nodeHtml += "</div>";
-  return nodeHtml;
+  return html`
+    <div style="flex: 1;">
+      <div class="family-node ${borderClass} ${node.spouse ? "has-spouse" : ""}">
+        ${renderPerson(node, generation)}
+        ${children.length > 0 ? renderConnectionToChildren() : ""}
+      </div>
+      ${children.length > 0 ? html`<div class="siblings">${childNodesHtml}</div>` : ""}
+    </div>
+  `;
 }
 
 function renderConnectionToChildren() {
-  return `
+  return html`
     <div class="grid-two-cols" style="flex:1">
       <div class="line-right"></div>
       <div></div>
@@ -188,11 +190,13 @@ export function familyTreeJsonToHtml(familyTrees, pageIndex = 0) {
   const trees = Array.isArray(familyTrees) ? familyTrees : [familyTrees];
   const safeIndex = Math.min(Math.max(pageIndex, 0), Math.max(trees.length - 1, 0));
   const activeTree = trees[safeIndex];
-  const activeTreeHtml = activeTree ? `<div id="active-family-tree">${renderNode(activeTree)}</div>` : "";
+  const activeTreeHtml = activeTree
+    ? html`<div id="active-family-tree">${renderNode(activeTree)}</div>`
+    : "";
 
   const pagerHtml =
     trees.length > 1
-      ? `
+      ? html`
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:0.75rem 0 1.25rem;">
           <button class="button-small" ${safeIndex === 0 ? "disabled" : ""} onclick="prevFamilyPage()">Previous Family</button>
           <span style="color:var(--muted);font-size:0.95rem;">Family ${safeIndex + 1} of ${trees.length}</span>
@@ -201,7 +205,7 @@ export function familyTreeJsonToHtml(familyTrees, pageIndex = 0) {
       `
       : "";
 
-  return pagerHtml + activeTreeHtml;
+  return html`${pagerHtml}${activeTreeHtml}`;
 }
 
 function tryParseJson(rawInput) {

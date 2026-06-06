@@ -1,4 +1,5 @@
 import { escapeHtmlAttr } from "./renderer.js";
+import { html } from "./html.js";
 import { publicGedUrls, otherSourceValues } from "./sources.js";
 
 function addOtherSourceOptions(selectEl) {
@@ -82,7 +83,7 @@ export function renderSelectedSourceMeta(optionValue) {
   }
 
   if (!optionValue || optionValue === "sample_family") {
-    metaEl.innerHTML = `
+    metaEl.innerHTML = html`
       <div class="selected-source-card">
         <div class="selected-source-title">Default Sample Family Tree (JSON)</div>
         <div class="selected-source-row">
@@ -95,7 +96,7 @@ export function renderSelectedSourceMeta(optionValue) {
   }
 
   if (optionValue === "from_textarea") {
-    metaEl.innerHTML = `
+    metaEl.innerHTML = html`
       <div class="selected-source-card">
         <div class="selected-source-title">Custom input from Textarea</div>
         <div class="selected-source-row">
@@ -110,7 +111,7 @@ export function renderSelectedSourceMeta(optionValue) {
   const metadata = publicGedUrls[optionValue];
   if (!metadata) {
     const safeValue = escapeHtmlAttr(optionValue);
-    metaEl.innerHTML = `
+    metaEl.innerHTML = html`
       <div class="selected-source-card">
         <div class="selected-source-title">Custom GEDCOM URL</div>
         <div class="selected-source-row">
@@ -127,7 +128,7 @@ export function renderSelectedSourceMeta(optionValue) {
   const sourceUrl = metadata.sourceUrl || optionValue;
   const safeSourceUrl = escapeHtmlAttr(sourceUrl);
 
-  metaEl.innerHTML = `
+  metaEl.innerHTML = html`
     <div class="selected-source-card">
       <div class="selected-source-title">${safeTitle}</div>
       <div class="selected-source-row">
