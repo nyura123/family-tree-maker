@@ -89,9 +89,7 @@ export function createFamilyTreePaging() {
     try {
       history.replaceState(null, "", url.toString());
     } catch (e) {
-      // In some browsers (e.g. Safari in private mode), history.replaceState may throw an error if the URL is too long. In that case, we can just ignore the error and not update the URL.
-
-      // blob URLs can be very long, so we might want to catch errors when trying to update the URL with a blob URL. If it fails, we can just skip updating the URL, since the user is already on the page with the blob content.
+      // replaceState on blob urls throws an error in some browsers, ignore
     }
 
     const familyTitleEl = document.getElementById("family-title");
@@ -161,7 +159,6 @@ export function createFamilyTreePaging() {
       }
     }
 
-    activeFamilyPageIndex = 0;
     setFamilyPage(startIndex);
   }
 
