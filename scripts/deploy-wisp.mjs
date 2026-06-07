@@ -7,13 +7,28 @@ const DEFAULT_HANDLE = "YOUR-HANDLE";
 const SITE = "family-tree-maker";
 const DIST_PATH = "./dist";
 
+// Handle validation per the ATProto handle spec: https://atproto.com/specs/handle
+const HANDLE_REGEX =
+  /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+
+const RESERVED_TLDS = new Set([
+  "alt", "arpa", "example", "internal", "invalid",
+  "local", "localhost", "onion",
+]);
+
 function normalizeHandle(value) {
-  const trimmed = String(value || "").trim();
-  if (!trimmed) return "";
-  if (trimmed.endsWith(".bsky.social")) {
-    return trimmed;
-  }
-  return `${trimmed}.bsky.social`;
+  let handle = String(value || "").trim();
+  if (handle.startsWith("@")) handle = handle.slice(1);
+  return handle.toLowerCase();
+}
+
+function validateHandle(handle) {
+  if (!handle) return "Handle is empty.";
+  if (handle.length > 253) return "Handle exceeds 253 characters.";
+  if (!HANDLE_REGEX.test(handle)) return "Handle syntax is invalid.";
+  const tld = handle.split(".").at(-1).toLowerCase();
+  if (RESERVED_TLDS.has(tld)) return `Handle uses a reserved TLD (.${tld}).`;
+  return null;
 }
 
 async function resolveHandle() {
@@ -28,7 +43,7 @@ async function resolveHandle() {
 
   const rl = createInterface({ input, output });
   try {
-    const answer = await rl.question("Enter your Bluesky handle: ");
+    const answer = await rl.question("Enter your atproto handle: ");
     return normalizeHandle(answer);
   } finally {
     rl.close();
@@ -37,8 +52,9 @@ async function resolveHandle() {
 
 async function main() {
   const handle = await resolveHandle();
-  if (!handle || handle === ".bsky.social") {
-    errorOutput.write("Invalid Bluesky handle. Aborting deploy.\n");
+  const validationError = validateHandle(handle);
+  if (validationError) {
+    errorOutput.write(`Invalid atproto handle: ${validationError} Aborting deploy.\n`);
     process.exit(1);
   }
 

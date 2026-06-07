@@ -49,7 +49,7 @@ Requires wisp-cli installed and authenticated.
 Optional: set `WISP_HANDLE` to skip the prompt:
 
 ```bash
-WISP_HANDLE=some-handle npm run deploy:wisp
+WISP_HANDLE=some-handle.bsky.social npm run deploy:wisp
 ```
 
 Deploy using existing dist output:
