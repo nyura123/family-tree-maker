@@ -131,19 +131,32 @@ export function parseGedcom(text) {
   }
 
   for (const fam of Object.values(families)) {
-    for (const childId of fam.chilIds) {
-      const child = individuals[childId];
-      if (child) {
-        child.famcList.push(fam.id);
-      }
-    }
+    let parentIndividualsFound = false;
     if (fam.husbId) {
       const husb = individuals[fam.husbId];
-      if (husb) husb.famsList.push(fam.id);
+      if (husb) {
+        husb.famsList.push(fam.id);
+        parentIndividualsFound = true;
+      }
     }
     if (fam.wifeId) {
       const wife = individuals[fam.wifeId];
-      if (wife) wife.famsList.push(fam.id);
+      if (wife) {
+        wife.famsList.push(fam.id);
+        parentIndividualsFound = true;
+      }
+    }
+
+    // Only link children to families if at least one parent is found in individuals
+    if (parentIndividualsFound) {
+      for (const childId of fam.chilIds) {
+        const child = individuals[childId];
+        if (child) {
+          child.famcList.push(fam.id);
+        }
+      }
+    } else {
+      console.warn(`Family with id ${fam.id} has no valid parents in individuals. Skipping linking children to this family.`);
     }
   }
 
@@ -165,26 +178,21 @@ function gedcomFormatDates(birth, death) {
 }
 
 function getRootIndividuals(individuals, families) {
-  const isValidParentFamily = (famId) => {
-    const parentFamily = families[famId];
-    return individuals[parentFamily?.husbId] || individuals[parentFamily?.wifeId];
-  };
-
   const roots = [];
   for (const individual of Object.values(individuals)) {
-    const childFamcIds = (individual.famcList || []).filter(isValidParentFamily);
+    const childFamcIds = (individual.famcList || []);
     if (childFamcIds.length > 0) {
       continue;
     }
 
-    const spouseFamIds = (individual.famsList || []).filter(isValidParentFamily);
+    const spouseFamIds = (individual.famsList || []);
     let hasAncestor = false;
     for (const famId of spouseFamIds) {
       const fam = families[famId];
       const spouseId = fam.husbId === individual.id ? fam.wifeId : fam.husbId;
       const spouse = individuals[spouseId];
       if (spouse) {
-        const spouseFamcIds = (spouse.famcList || []).filter(isValidParentFamily);
+        const spouseFamcIds = (spouse.famcList || []);
         if (spouseFamcIds.length > 0) {
           hasAncestor = true;
           break;
@@ -206,7 +214,7 @@ function getTreeSize(individuals, families, personId, visited = new Set()) {
   if (!person) return 0;
 
   let size = 1;
-  const famIds = (person.famsList || []).filter((famId) => families[famId]);
+  const famIds = (person.famsList || []);
   for (const famId of famIds) {
     const fam = families[famId];
     const spouseId = fam.husbId === personId ? fam.wifeId : fam.husbId;
@@ -238,7 +246,7 @@ export function gedcomToTree(individuals, families) {
     if (person.occupation) baseNode.occupation = person.occupation;
     if (person.note) baseNode.note = person.note;
 
-    const famIds = (person.famsList || []).filter((famId) => families[famId]);
+    const famIds = (person.famsList || []);
     const variants = [];
 
     for (let idx = 0; idx < famIds.length; idx++) {
@@ -328,13 +336,16 @@ export function getRootFamilyIdsForIndividual(personId, individuals, families, c
   visited.add(personId);
 
   const person = individuals[personId];
-  if (!person) return [];
+  if (!person) {
+    console.warn(`Person with id ${personId} not found in individuals.`);
+    return [];
+  }
 
-  const famcList = (person.famcList || []).filter((id) => families[id]);
+  const famcList = (person.famcList || []);
+  // child with no parent: its famsList are root families
   if (famcList.length === 0) {
     (person.famsList || [])
-      .filter((id) => families[id])
-      .forEach((id) => rootFamilyIds.add(id));
+      .forEach((familyId) => rootFamilyIds.add(familyId));
     const result = Array.from(rootFamilyIds);
     cache[personId] = result;
     return result;
@@ -342,7 +353,6 @@ export function getRootFamilyIdsForIndividual(personId, individuals, families, c
 
   for (const famId of famcList) {
     const fam = families[famId];
-    if (!fam) continue;
     const parentIds = [fam.husbId, fam.wifeId].filter((id) => id);
     for (const parentId of parentIds) {
       const parentRootFamilyIds = getRootFamilyIdsForIndividual(parentId, individuals, families, cache, visited);

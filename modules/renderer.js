@@ -262,14 +262,17 @@ export function updateFamilyTree(
     const trees = gedcomToTree(individuals, families);
     notesStore.populateNotesStore(trees);
     let surname = "Family";
-    if (trees.length === 1) {
-      const parts = (trees[0].name || "").split(" ");
-      surname = parts.length > 1 ? parts[parts.length - 1] : parts[0] || "Family";
-    } else if (trees.length > 1) {
-      surname = "Multiple Families";
+    let rootTitle = title;
+    if (!rootTitle) {
+      if (trees.length === 1) {
+        const parts = (trees[0].name || "").split(" ");
+        surname = parts.length > 1 ? parts[parts.length - 1] : parts[0] || "Family";
+        rootTitle = "The " + surname + " Family";
+      } else if (trees.length > 1) {
+        rootTitle = "Multiple Families";
+      }
     }
 
-    const rootTitle = title || "The " + surname + " Family";
     paging.initializeFamilyPaging({
       title: rootTitle,
       subtitle: "",
